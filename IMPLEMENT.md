@@ -166,10 +166,10 @@
 - [ ] 2차 마이그레이션 성공 + 수동 체크리스트 PASS + 운영 스모크 PASS
 
 ## 5. 중단/재개 체크리스트
-- [ ] 마지막 완료 체크박스 위치를 이 문서에 반영
-- [ ] 실패/보류 항목에 원인 1줄 기록
-- [ ] 다음 시작 명령 1개 기록
-- [ ] 관련 커밋 SHA 기록
+- [x] 마지막 완료 체크박스 위치를 이 문서에 반영
+- [x] 실패/보류 항목에 원인 1줄 기록
+- [x] 다음 시작 명령 1개 기록
+- [x] 관련 커밋 SHA 기록
 
 ## 6. 진행 로그(append-only)
 - [ ] `YYYY-MM-DD HH:mm UTC | Phase-X | done: ... | next: ... | commit: ...`
@@ -186,3 +186,4 @@
 - [x] `2026-02-21 18:20 UTC | Phase-7(partial) | done: Playwright config + 4 API integration scenarios + integration-smoke script | next: run E2E against live local server and close Phase-7 | commit: (working tree, not committed yet)`
 - [x] `2026-02-21 18:32 UTC | Phase-7/8(partial) | done: memory-service mode for local integration + release-smoke/release-count scripts + unit coverage | next: run test:e2e on non-sandbox host and close Phase-7 completion gate | commit: (working tree, not committed yet)`
 - [x] `2026-02-21 18:41 UTC | Phase-7 complete + Phase-8(partial) | done: notesApi<->express integration test + cutover pipeline script(cutover:run) + unit tests | next: execute real Phase-8 on Atlas with latest archive | commit: (working tree, not committed yet)`
+- [x] `2026-02-21 18:43 UTC | docs/runbook update | done: CUTOVER_RUNBOOK.md + restart checklist sync | next: run pnpm run cutover:run -- --archive ./mongo-all.archive --yes on real Atlas env | commit: dfb7aa0`

@@ -7,6 +7,7 @@ Refactoring workspace for `jwmemo` with a document-first workflow.
 - Design: `DESIGN.md`
 - Implementation plan: `IMPLEMENT.md`
 - Release manual checklist: `MANUAL_TEST_CHECKLIST.md`
+- Cutover runbook: `CUTOVER_RUNBOOK.md`
 
 ## Local Setup
 1. Install dependencies: `pnpm install`
