@@ -3,6 +3,7 @@ import express from "express";
 import { resolve } from "node:path";
 import { createErrorMiddleware, createApiError } from "./errors.mjs";
 import { createJnoteRouter } from "./routes/jnote.mjs";
+import { toSafeLogLine } from "./logger.mjs";
 
 function nowIso() {
   return new Date().toISOString();
@@ -36,7 +37,7 @@ export function createApp(options = {}) {
   app.use((req, res, next) => {
     res.on("finish", () => {
       logger.info?.(
-        JSON.stringify({
+        toSafeLogLine({
           time: nowIso(),
           level: "info",
           requestId: req.requestId,
@@ -104,4 +105,3 @@ export function createApp(options = {}) {
 
   return app;
 }
-

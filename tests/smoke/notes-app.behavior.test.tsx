@@ -171,4 +171,59 @@ describe("NotesApp behavior", () => {
     expect(uploadImage).toHaveBeenCalledTimes(1);
     expect(noteInput.value).toContain("![sample](images/20260221/sample.png)");
   });
+
+  it("keeps draft on save failure and allows retry success", async () => {
+    const createNote = vi
+      .fn()
+      .mockRejectedValueOnce(
+        new NotesApiError(500, {
+          code: "FILE_SAVE_FAILED",
+          message: "save failed",
+          retryable: true
+        })
+      )
+      .mockResolvedValueOnce({
+        _id: "000000000000000000000001",
+        title: "draft title",
+        note: "draft body",
+        category: [],
+        favorite: false
+      });
+
+    const app = <NotesApp api={createBaseApi({ createNote })} />;
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    activeUnmounts.push(render(app, container));
+    await flushMicrotasks();
+
+    const newButton = [...container.querySelectorAll(".button")].find(
+      (element) => element.textContent?.trim() === "New"
+    ) as HTMLButtonElement;
+    newButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await flushMicrotasks();
+
+    const titleInput = container.querySelector(".text-input") as HTMLInputElement;
+    const noteInput = container.querySelector(".note-input") as HTMLTextAreaElement;
+    const saveButton = [...container.querySelectorAll(".button")].find(
+      (element) => element.textContent?.trim() === "Save"
+    ) as HTMLButtonElement;
+
+    titleInput.value = "draft title";
+    titleInput.dispatchEvent(new Event("input", { bubbles: true }));
+    noteInput.value = "draft body";
+    noteInput.dispatchEvent(new Event("input", { bubbles: true }));
+
+    saveButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await flushMicrotasks();
+
+    expect(container.textContent).toContain("FILE_SAVE_FAILED: save failed");
+    expect((container.querySelector(".note-input") as HTMLTextAreaElement).value).toBe("draft body");
+
+    saveButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await flushMicrotasks();
+    await flushMicrotasks();
+
+    expect(createNote).toHaveBeenCalledTimes(2);
+    expect(container.textContent).toContain("Saved.");
+  });
 });

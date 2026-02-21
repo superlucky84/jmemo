@@ -16,7 +16,7 @@
 - [x] Phase 2. `/jnote` 백엔드 호환 구현
 - [x] Phase 3. Lithent 프런트 기본 화면 구현
 - [ ] Phase 4. Monaco + monaco-vim + Preview 동기화
-- [ ] Phase 5. 운영 보강(로그/헬스체크/orphan 배치)
+- [x] Phase 5. 운영 보강(로그/헬스체크/orphan 배치)
 - [ ] Phase 6. 테스트 강화 Phase(세부/경계 케이스)
 - [ ] Phase 7. 통합 테스트 Phase(Phase 간 연동 검증)
 - [ ] Phase 8. 배포 직전 2차 마이그레이션 + 컷오버
@@ -105,31 +105,31 @@
 
 ### Phase 5. 운영 보강(로그/헬스체크/orphan 배치)
 #### 구현 체크리스트
-- [ ] 구조화 로그 필드 고정(`time`, `level`, `requestId`, `route`, `status`, `latencyMs`)
-- [ ] 민감정보 마스킹 처리(`MONGODB_URI`, 토큰, 쿠키)
-- [ ] `/health/live`, `/health/ready` 정책 반영(ready 실패 시 `503`)
-- [ ] orphan 이미지 배치 정리 작업 구현(1일 1회, 24시간 보호)
+- [x] 구조화 로그 필드 고정(`time`, `level`, `requestId`, `route`, `status`, `latencyMs`)
+- [x] 민감정보 마스킹 처리(`MONGODB_URI`, 토큰, 쿠키)
+- [x] `/health/live`, `/health/ready` 정책 반영(ready 실패 시 `503`)
+- [x] orphan 이미지 배치 정리 작업 구현(1일 1회, 24시간 보호)
 
 #### 기본 테스트 코드
-- [ ] `ready` 성공/실패 상태 테스트 추가
-- [ ] orphan 후보 판정 로직 테스트 추가
-- [ ] 민감정보 마스킹 유틸 테스트 추가
+- [x] `ready` 성공/실패 상태 테스트 추가
+- [x] orphan 후보 판정 로직 테스트 추가
+- [x] 민감정보 마스킹 유틸 테스트 추가
 
 #### 완료 기준
-- [ ] 운영 점검 관점에서 장애 감지와 로그 추적 가능
+- [x] 운영 점검 관점에서 장애 감지와 로그 추적 가능
 
 ### Phase 6. 테스트 강화 Phase(세부/경계 케이스)
 #### 구현 체크리스트
-- [ ] API 경계값/예외 케이스 확장 테스트 추가(`IC-12` 코드별)
-- [ ] 저장 실패/재시도/이탈 경고 UX 경계 테스트 확장
+- [x] API 경계값/예외 케이스 확장 테스트 추가(`IC-12` 코드별)
+- [x] 저장 실패/재시도/이탈 경고 UX 경계 테스트 확장
 - [ ] Preview 동기화 대용량 문서 케이스 테스트 추가
-- [ ] 마이그레이션 스크립트 종료코드 전수 테스트 추가
+- [x] 마이그레이션 스크립트 종료코드 전수 테스트 추가
 - [ ] 테스트 실행 리포트 포맷 통일(JUnit 또는 텍스트 요약)
 
 #### 기본 테스트 코드
 - [ ] 백엔드 테스트에 오류 코드 snapshot/fixture 추가
-- [ ] 프런트 테스트에 상태 전이 케이스(`dirty -> save-fail -> retry`) 추가
-- [ ] 스크립트 테스트에 실패 주입(mock) 케이스 추가
+- [x] 프런트 테스트에 상태 전이 케이스(`dirty -> save-fail -> retry`) 추가
+- [x] 스크립트 테스트에 실패 주입(mock) 케이스 추가
 
 #### 완료 기준
 - [ ] 핵심 모듈의 회귀 위험이 수치/리포트로 확인 가능
@@ -179,3 +179,5 @@
 - [x] `2026-02-21 17:37 UTC | Phase-2 complete | done: Express/Mongoose jnote API + IC-12 error contract + upload limits + smoke tests | next: Phase-3 Lithent frontend base | commit: (working tree, not committed yet)`
 - [x] `2026-02-21 17:45 UTC | Phase-3 complete | done: Lithent app scaffold + note list/view/write + search + unsaved warning + frontend smoke/behavior tests | next: Phase-4 Monaco + Vim editor integration | commit: (working tree, not committed yet)`
 - [x] `2026-02-21 17:55 UTC | Phase-4(partial) | done: monaco-vim dynamic mount + :w/:wq command binding + drop-upload markdown insertion + unit/smoke tests | next: manual browser validation then Phase-5 ops hardening | commit: (working tree, not committed yet)`
+- [x] `2026-02-21 18:15 UTC | Phase-5 complete | done: safe log masking + orphan image batch cleaner(24h guard, daily scheduler) + unit tests | next: Phase-6 test hardening (error-code matrix / state transitions) | commit: (working tree, not committed yet)`
+- [x] `2026-02-21 18:16 UTC | Phase-6(partial) | done: API error-code edge tests + save-fail->retry UI state-transition test | next: preview large-doc sync tests + backend error fixtures/snapshots | commit: (working tree, not committed yet)`

@@ -1,3 +1,5 @@
+import { toSafeLogLine } from "./logger.mjs";
+
 const ERROR_REGISTRY = {
   VALIDATION_ERROR: { status: 400, retryable: false },
   INVALID_ID_FORMAT: { status: 400, retryable: false },
@@ -70,7 +72,7 @@ export function createErrorMiddleware(options = {}) {
     const normalized = normalizeApiError(error);
 
     logger.error?.(
-      JSON.stringify({
+      toSafeLogLine({
         time: new Date().toISOString(),
         level: "error",
         requestId: req.requestId,
@@ -93,4 +95,3 @@ export function createErrorMiddleware(options = {}) {
     });
   };
 }
-

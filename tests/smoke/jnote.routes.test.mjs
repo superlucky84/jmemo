@@ -103,6 +103,13 @@ function createMemoryNoteService() {
         });
       }
 
+      if (payload.favorite !== undefined && typeof payload.favorite !== "boolean") {
+        throw createApiError("VALIDATION_ERROR", {
+          message: "favorite must be boolean",
+          details: { field: "favorite" }
+        });
+      }
+
       if (payload.favorite !== undefined) {
         note.favorite = Boolean(payload.favorite);
       }
@@ -222,6 +229,39 @@ describe("/jnote routes smoke", () => {
     expect(notFound.body.ok).toBe(false);
   });
 
+  it("returns validation error codes for bad payloads", async () => {
+    const uploadRootDir = await mkdtemp(join(tmpdir(), "jmemo-upload-"));
+    tempDirs.push(uploadRootDir);
+    const app = createApp({
+      noteService: createMemoryNoteService(),
+      uploadRootDir,
+      readinessCheck: async () => ({ ok: true })
+    });
+
+    const missingTitle = await request(app).post("/jnote/create").send({
+      note: "x"
+    });
+    expect(missingTitle.status).toBe(400);
+    expect(missingTitle.body.error.code).toBe("MISSING_REQUIRED_FIELD");
+
+    const created = await request(app).post("/jnote/create").send({
+      title: "title",
+      note: "note"
+    });
+    expect(created.status).toBe(200);
+
+    const invalidFavorite = await request(app).post("/jnote/update").send({
+      id: created.body._id,
+      favorite: "invalid"
+    });
+    expect(invalidFavorite.status).toBe(400);
+    expect(invalidFavorite.body.error.code).toBe("VALIDATION_ERROR");
+
+    const missingFile = await request(app).post("/jnote/upload");
+    expect(missingFile.status).toBe(400);
+    expect(missingFile.body.error.code).toBe("MISSING_REQUIRED_FIELD");
+  });
+
   it("accepts png upload and rejects svg / oversize files", async () => {
     const uploadRootDir = await mkdtemp(join(tmpdir(), "jmemo-upload-"));
     tempDirs.push(uploadRootDir);
@@ -254,4 +294,3 @@ describe("/jnote routes smoke", () => {
     expect(oversized.body.error.code).toBe("FILE_TOO_LARGE");
   });
 });
-

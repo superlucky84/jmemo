@@ -1,7 +1,6 @@
 import { isValidObjectId } from "mongoose";
 import { createApiError } from "../errors.mjs";
 import {
-  cleanupRemovedImages,
   escapeRegExp,
   parseSearchTokens,
   serializeNote,
@@ -101,9 +100,7 @@ function normalizeSearchFilter(searchString) {
 
 export function createNoteService(options = {}) {
   const {
-    JmemoModel,
-    imagesRootDir,
-    logger = console
+    JmemoModel
   } = options;
 
   if (!JmemoModel) {
@@ -189,8 +186,6 @@ export function createNoteService(options = {}) {
       const hasEditableField =
         payload.title !== undefined || payload.note !== undefined || payload.category !== undefined;
 
-      const beforeNote = note.note;
-
       if (hasEditableField) {
         if (payload.title !== undefined) {
           ensureRequiredTitle(payload.title);
@@ -210,15 +205,6 @@ export function createNoteService(options = {}) {
 
       await note.save();
 
-      if (hasEditableField) {
-        await cleanupRemovedImages({
-          beforeNote,
-          afterNote: note.note,
-          imagesRootDir,
-          logger
-        });
-      }
-
       return serializeNote(note);
     },
 
@@ -236,17 +222,9 @@ export function createNoteService(options = {}) {
 
       await JmemoModel.deleteOne({ _id: id });
 
-      await cleanupRemovedImages({
-        beforeNote: note.note,
-        afterNote: "",
-        imagesRootDir,
-        logger
-      });
-
       return {
         result: true
       };
     }
   };
 }
-

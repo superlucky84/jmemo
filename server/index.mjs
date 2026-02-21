@@ -2,8 +2,10 @@ import { resolve } from "node:path";
 import { createApp } from "./app.mjs";
 import { resolveAppEnv } from "../src/shared/env.mjs";
 import { connectMongo, disconnectMongo, pingMongo } from "./db.mjs";
+import { toSafeLogLine } from "./logger.mjs";
 import { JmemoModel } from "./models/jmemo-model.mjs";
 import { createNoteService } from "./services/note-service.mjs";
+import { runOrphanImageCleanup, scheduleOrphanImageCleanup } from "./services/orphan-image-cleaner.mjs";
 
 const config = resolveAppEnv(process.env, { requireMongoUri: false });
 const uploadRootDir = resolve(process.cwd(), config.uploadDir);
@@ -13,7 +15,7 @@ if (config.mongoUri) {
     await connectMongo(config.mongoUri);
   } catch (error) {
     console.error(
-      JSON.stringify({
+      toSafeLogLine({
         time: new Date().toISOString(),
         level: "error",
         event: "db_connect_failed",
@@ -29,6 +31,29 @@ const noteService = createNoteService({
   imagesRootDir: uploadRootDir,
   logger: console
 });
+
+let stopOrphanImageCleanupScheduler = () => {};
+
+if (config.mongoUri) {
+  void runOrphanImageCleanup({
+    JmemoModel,
+    imagesRootDir: uploadRootDir,
+    logger: console,
+    reason: "startup"
+  });
+
+  stopOrphanImageCleanupScheduler = scheduleOrphanImageCleanup({
+    runCleanup: async () => {
+      await runOrphanImageCleanup({
+        JmemoModel,
+        imagesRootDir: uploadRootDir,
+        logger: console,
+        reason: "interval"
+      });
+    },
+    logger: console
+  });
+}
 
 const app = createApp({
   noteService,
@@ -57,7 +82,7 @@ const app = createApp({
 
 const server = app.listen(config.port, () => {
   console.log(
-    JSON.stringify({
+    toSafeLogLine({
       time: new Date().toISOString(),
       level: "info",
       event: "server_started",
@@ -70,7 +95,7 @@ const server = app.listen(config.port, () => {
 
 async function shutdown(signal) {
   console.log(
-    JSON.stringify({
+    toSafeLogLine({
       time: new Date().toISOString(),
       level: "info",
       event: "server_shutdown",
@@ -82,11 +107,13 @@ async function shutdown(signal) {
     server.close(() => resolvePromise());
   });
 
+  stopOrphanImageCleanupScheduler();
+
   try {
     await disconnectMongo();
   } catch (error) {
     console.error(
-      JSON.stringify({
+      toSafeLogLine({
         time: new Date().toISOString(),
         level: "error",
         event: "db_disconnect_failed",
@@ -105,4 +132,3 @@ process.on("SIGINT", () => {
 process.on("SIGTERM", () => {
   void shutdown("SIGTERM");
 });
-
