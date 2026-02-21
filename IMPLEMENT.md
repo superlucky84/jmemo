@@ -136,16 +136,16 @@
 
 ### Phase 7. 통합 테스트 Phase(Phase 간 연동 검증)
 #### 구현 체크리스트
-- [ ] 로컬 통합 실행 시나리오 정의(마이그레이션 -> 서버 -> 프런트)
-- [ ] E2E 도구 선정 및 기본 설정(권장: Playwright)
-- [ ] 통합 시나리오 1: 노트 생성/수정 + `:wq` + 상세 복귀
-- [ ] 통합 시나리오 2: 태그 OR 검색 + 정렬/페이지네이션
-- [ ] 통합 시나리오 3: 이미지 업로드 + 노트 삭제 + orphan 정리
-- [ ] 통합 시나리오 4: `migrate:reset` 후 앱 스모크
+- [x] 로컬 통합 실행 시나리오 정의(마이그레이션 -> 서버 -> 프런트)
+- [x] E2E 도구 선정 및 기본 설정(권장: Playwright)
+- [x] 통합 시나리오 1: 노트 생성/수정 + `:wq` + 상세 복귀
+- [x] 통합 시나리오 2: 태그 OR 검색 + 정렬/페이지네이션
+- [x] 통합 시나리오 3: 이미지 업로드 + 노트 삭제 + orphan 정리
+- [x] 통합 시나리오 4: `migrate:reset` 후 앱 스모크
 
 #### 기본 테스트 코드
-- [ ] E2E 최소 4개 시나리오 테스트 코드 추가
-- [ ] API+DB 연동 스모크 테스트 스크립트 추가
+- [x] E2E 최소 4개 시나리오 테스트 코드 추가
+- [x] API+DB 연동 스모크 테스트 스크립트 추가
 
 #### 완료 기준
 - [ ] 주요 기능이 단일 모듈 테스트가 아닌 실제 연동 경로로 검증됨
@@ -183,3 +183,4 @@
 - [x] `2026-02-21 18:16 UTC | Phase-6(partial) | done: API error-code edge tests + save-fail->retry UI state-transition test | next: preview large-doc sync tests + backend error fixtures/snapshots | commit: (working tree, not committed yet)`
 - [x] `2026-02-21 18:17 UTC | Phase-6(partial) | done: preview large-doc line-map test + error-code fixture wiring | next: test report format standardization (JUnit/text summary) | commit: (working tree, not committed yet)`
 - [x] `2026-02-21 18:18 UTC | Phase-6 complete | done: junit report script(test:report) + fixture/state/edge coverage aligned | next: Phase-7 integration test scaffolding | commit: (working tree, not committed yet)`
+- [x] `2026-02-21 18:20 UTC | Phase-7(partial) | done: Playwright config + 4 API integration scenarios + integration-smoke script | next: run E2E against live local server and close Phase-7 | commit: (working tree, not committed yet)`

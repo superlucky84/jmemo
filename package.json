@@ -19,9 +19,11 @@
     "test:smoke": "vitest run tests/smoke",
     "test:unit": "vitest run tests/unit",
     "test:report": "vitest run --reporter=junit --outputFile=reports/junit.xml",
+    "test:e2e": "playwright test",
     "env:check": "node --env-file=.env scripts/check-env.mjs",
     "db:ping": "node --env-file=.env scripts/db-ping.mjs",
     "db:shell": "node --env-file=.env scripts/db-shell.mjs",
+    "integration:smoke": "node --env-file=.env scripts/integration-smoke.mjs",
     "migrate:reset": "node --env-file=.env scripts/migrate-reset.mjs",
     "lint": "eslint .",
     "format": "prettier --write .",
@@ -37,6 +39,7 @@
     "multer": "^2.0.2"
   },
   "devDependencies": {
+    "@playwright/test": "^1.58.2",
     "@types/node": "^22.13.9",
     "eslint": "^9.21.0",
     "jsdom": "^28.1.0",
