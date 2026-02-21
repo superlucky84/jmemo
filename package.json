@@ -10,28 +10,37 @@
   },
   "scripts": {
     "dev": "vite",
+    "server:dev": "node --watch --env-file=.env server/index.mjs",
+    "server:start": "node --env-file=.env server/index.mjs",
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:smoke": "vitest run tests/smoke",
+    "test:unit": "vitest run tests/unit",
     "env:check": "node --env-file=.env scripts/check-env.mjs",
     "db:ping": "node --env-file=.env scripts/db-ping.mjs",
     "db:shell": "node --env-file=.env scripts/db-shell.mjs",
+    "migrate:reset": "node --env-file=.env scripts/migrate-reset.mjs",
     "lint": "eslint .",
     "format": "prettier --write .",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "express": "^5.2.1",
     "lithent": "file:../lithent",
     "monaco-editor": "^0.52.2",
     "monaco-vim": "^0.4.0",
-    "mongodb": "^7.1.0"
+    "mongodb": "^7.1.0",
+    "mongoose": "^9.2.1",
+    "multer": "^2.0.2"
   },
   "devDependencies": {
     "@types/node": "^22.13.9",
     "eslint": "^9.21.0",
     "mongosh": "^2.7.0",
     "prettier": "^3.5.2",
+    "supertest": "^7.2.2",
     "typescript": "^5.8.2",
     "vite": "^6.2.1",
     "vitest": "^3.0.8"

@@ -11,9 +11,9 @@
 - 배포 승인 기준은 `MANUAL_TEST_CHECKLIST.md` PASS + Phase 8 완료다.
 
 ## 3. Phase 진행 보드
-- [ ] Phase 0. 기반 정리 및 작업 프레임
-- [ ] Phase 1. Atlas 1차 마이그레이션 + reset 자동화
-- [ ] Phase 2. `/jnote` 백엔드 호환 구현
+- [x] Phase 0. 기반 정리 및 작업 프레임
+- [x] Phase 1. Atlas 1차 마이그레이션 + reset 자동화
+- [x] Phase 2. `/jnote` 백엔드 호환 구현
 - [ ] Phase 3. Lithent 프런트 기본 화면 구현
 - [ ] Phase 4. Monaco + monaco-vim + Preview 동기화
 - [ ] Phase 5. 운영 보강(로그/헬스체크/orphan 배치)
@@ -25,51 +25,51 @@
 
 ### Phase 0. 기반 정리 및 작업 프레임
 #### 구현 체크리스트
-- [ ] `src/`, `server/`, `tests/` 기본 디렉터리 생성
-- [ ] `package.json` 스크립트에 서버 실행/테스트 기본 명령 추가
-- [ ] `.env.example`에 필수 키 목록 확정 (`MONGODB_URI`, `PORT`, `UPLOAD_DIR`, `LOG_LEVEL`)
-- [ ] `MANUAL_TEST_CHECKLIST.md`와 본 문서 참조 링크를 `README` 또는 루트 문서에 추가
+- [x] `src/`, `server/`, `tests/` 기본 디렉터리 생성
+- [x] `package.json` 스크립트에 서버 실행/테스트 기본 명령 추가
+- [x] `.env.example`에 필수 키 목록 확정 (`MONGODB_URI`, `PORT`, `UPLOAD_DIR`, `LOG_LEVEL`)
+- [x] `MANUAL_TEST_CHECKLIST.md`와 본 문서 참조 링크를 `README` 또는 루트 문서에 추가
 
 #### 기본 테스트 코드
-- [ ] 환경 변수 유효성 검사 유닛 테스트 추가
-- [ ] 서버 부팅 스모크 테스트(프로세스 기동/종료) 추가
+- [x] 환경 변수 유효성 검사 유닛 테스트 추가
+- [x] 서버 부팅 스모크 테스트(프로세스 기동/종료) 추가
 
 #### 완료 기준
-- [ ] 새 에이전트가 `pnpm install` 후 기본 테스트 1회 실행 가능
+- [x] 새 에이전트가 `pnpm install` 후 기본 테스트 1회 실행 가능
 
 ### Phase 1. Atlas 1차 마이그레이션 + reset 자동화
 #### 구현 체크리스트
-- [ ] `scripts/migrate-reset.mjs` 구현 (`IC-10` 계약 준수)
-- [ ] 인자 계약 구현: `--archive`, `--db`, `--uri`, `--yes`, `--dry-run`
-- [ ] 종료코드 계약 구현: `0/2/3/4/5/6`
-- [ ] `mongo-all.archive` 기준 1차 복원 실행(개발 시작 기준 데이터)
-- [ ] 결과 요약 로그(`RESULT`, `EXIT_CODE`, `DB`, `ARCHIVE`) 출력
+- [x] `scripts/migrate-reset.mjs` 구현 (`IC-10` 계약 준수)
+- [x] 인자 계약 구현: `--archive`, `--db`, `--uri`, `--yes`, `--dry-run`
+- [x] 종료코드 계약 구현: `0/2/3/4/5/6`
+- [x] `mongo-all.archive` 기준 1차 복원 실행(개발 시작 기준 데이터)
+- [x] 결과 요약 로그(`RESULT`, `EXIT_CODE`, `DB`, `ARCHIVE`) 출력
 
 #### 기본 테스트 코드
-- [ ] 인자 파싱 유닛 테스트 추가
-- [ ] `--dry-run` 동작 테스트 추가
-- [ ] 실패 코드 매핑 테스트(연결 실패/복원 실패) 추가
+- [x] 인자 파싱 유닛 테스트 추가
+- [x] `--dry-run` 동작 테스트 추가
+- [x] 실패 코드 매핑 테스트(연결 실패/복원 실패) 추가
 
 #### 완료 기준
-- [ ] 동일 명령으로 재실행해도 절차가 재현 가능
+- [x] 동일 명령으로 재실행해도 절차가 재현 가능
 
 ### Phase 2. `/jnote` 백엔드 호환 구현
 #### 구현 체크리스트
-- [ ] Express 앱/라우터 골격 구성 (`/jnote/*`, `/health/live`, `/health/ready`)
-- [ ] Mongoose 모델 구현(`Jmemo`, `Category`)
-- [ ] 엔드포인트 구현: `create/read/read/:id/update/delete/upload`
-- [ ] 태그 검색 규칙 구현(`case-insensitive + OR`, `IC-02`)
-- [ ] 정렬/페이지네이션 규칙 구현(`IC-03`)
-- [ ] 에러 코드 사전 적용(`IC-12`) + 공통 에러 응답 포맷 적용
-- [ ] 업로드 정책 반영(`IC-07`, 로컬 `images/YYYYMMDD/<uuid>.<ext>`)
+- [x] Express 앱/라우터 골격 구성 (`/jnote/*`, `/health/live`, `/health/ready`)
+- [x] Mongoose 모델 구현(`Jmemo`, `Category`)
+- [x] 엔드포인트 구현: `create/read/read/:id/update/delete/upload`
+- [x] 태그 검색 규칙 구현(`case-insensitive + OR`, `IC-02`)
+- [x] 정렬/페이지네이션 규칙 구현(`IC-03`)
+- [x] 에러 코드 사전 적용(`IC-12`) + 공통 에러 응답 포맷 적용
+- [x] 업로드 정책 반영(`IC-07`, 로컬 `images/YYYYMMDD/<uuid>.<ext>`)
 
 #### 기본 테스트 코드
-- [ ] CRUD 성공 경로 API 테스트 추가
-- [ ] 잘못된 입력/없는 리소스 API 테스트(`400/404`) 추가
-- [ ] 업로드 제한 테스트(형식/용량) 추가
+- [x] CRUD 성공 경로 API 테스트 추가
+- [x] 잘못된 입력/없는 리소스 API 테스트(`400/404`) 추가
+- [x] 업로드 제한 테스트(형식/용량) 추가
 
 #### 완료 기준
-- [ ] 원본 `jwmemo` 기준 주요 요청/응답이 기능적으로 호환
+- [x] 원본 `jwmemo` 기준 주요 요청/응답이 기능적으로 호환
 
 ### Phase 3. Lithent 프런트 기본 화면 구현
 #### 구현 체크리스트
@@ -173,3 +173,7 @@
 
 ## 6. 진행 로그(append-only)
 - [ ] `YYYY-MM-DD HH:mm UTC | Phase-X | done: ... | next: ... | commit: ...`
+- [x] `2026-02-21 17:15 UTC | Phase-0 | done: env module + server bootstrap + unit/smoke tests + README links | next: Phase-1 migrate-reset script scaffolding | commit: (working tree, not committed yet)`
+- [x] `2026-02-21 17:17 UTC | Phase-1(partial) | done: migrate-reset script + exit-code contract + dry-run/arg/failure tests | next: run real 1st Atlas restore with --yes when approved | commit: (working tree, not committed yet)`
+- [x] `2026-02-21 17:37 UTC | Phase-1 complete | done: user executed real migrate-reset success after mongorestore install + fallback support landed | next: Phase-2 backend compatibility implementation | commit: (working tree, not committed yet)`
+- [x] `2026-02-21 17:37 UTC | Phase-2 complete | done: Express/Mongoose jnote API + IC-12 error contract + upload limits + smoke tests | next: Phase-3 Lithent frontend base | commit: (working tree, not committed yet)`

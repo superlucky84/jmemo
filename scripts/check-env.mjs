@@ -1,19 +1,13 @@
-const rawUri = process.env.MONGODB_URI ?? "";
-const uri = rawUri.trim();
+import { resolveAppEnv } from "../src/shared/env.mjs";
 
-if (!uri) {
-  console.error("Missing MONGODB_URI in .env");
+try {
+  const config = resolveAppEnv(process.env, { requireMongoUri: true });
+
+  console.log("MONGODB_URI is configured.");
+  console.log(`PORT=${config.port}`);
+  console.log(`UPLOAD_DIR=${config.uploadDir}`);
+  console.log(`LOG_LEVEL=${config.logLevel}`);
+} catch (error) {
+  console.error(error?.message ?? error);
   process.exit(1);
 }
-
-if (!uri.startsWith("mongodb+srv://")) {
-  console.error("MONGODB_URI must start with mongodb+srv://");
-  process.exit(1);
-}
-
-if (uri.includes("<db_password>") || uri.includes("<URL_ENCODED_PASSWORD>")) {
-  console.error("Replace password placeholder in MONGODB_URI before running the app.");
-  process.exit(1);
-}
-
-console.log("MONGODB_URI is configured.");

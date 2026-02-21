@@ -1,11 +1,14 @@
 import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
+import { validateMongoUri } from "../src/shared/env.mjs";
 
-const uri = (process.env.MONGODB_URI ?? "").trim();
+let uri;
 
-if (!uri) {
-  console.error("Missing MONGODB_URI. Set it in .env first.");
+try {
+  uri = validateMongoUri(process.env.MONGODB_URI);
+} catch (error) {
+  console.error(error?.message ?? error);
   process.exit(1);
 }
 
