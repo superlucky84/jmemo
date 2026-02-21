@@ -5,6 +5,7 @@ node_modules/
 dist/
 coverage/
 reports/
+test-results/
 .vite/
 *.tsbuildinfo
 
@@ -32,3 +33,4 @@ temp/
 # Local archives / dumps
 mongo-all.archive
 *.archive
+images/
