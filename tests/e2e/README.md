@@ -6,12 +6,16 @@
 - Scenarios: create/update/delete, tag OR search + pagination, upload flow, health checks
 
 ## Run
-1. Start backend server (`pnpm run server:start` or `pnpm run server:dev`)
-2. Run E2E tests:
+1. Run E2E tests:
 
 ```bash
 pnpm run test:e2e
 ```
+
+The Playwright config starts backend automatically with memory data mode:
+- `PORT=4100`
+- `JMEMO_USE_MEMORY_SERVICE=1`
+- `API_BASE_URL=http://127.0.0.1:4100`
 
 ## Notes
 - These tests use API-level integration to validate Phase 7 contracts without browser UI flakiness.

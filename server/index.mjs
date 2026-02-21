@@ -6,11 +6,12 @@ import { toSafeLogLine } from "./logger.mjs";
 import { JmemoModel } from "./models/jmemo-model.mjs";
 import { createNoteService } from "./services/note-service.mjs";
 import { runOrphanImageCleanup, scheduleOrphanImageCleanup } from "./services/orphan-image-cleaner.mjs";
+import { createMemoryNoteService } from "./services/memory-note-service.mjs";
 
 const config = resolveAppEnv(process.env, { requireMongoUri: false });
 const uploadRootDir = resolve(process.cwd(), config.uploadDir);
 
-if (config.mongoUri) {
+if (!config.useMemoryService && config.mongoUri) {
   try {
     await connectMongo(config.mongoUri);
   } catch (error) {
@@ -26,15 +27,20 @@ if (config.mongoUri) {
   }
 }
 
-const noteService = createNoteService({
-  JmemoModel,
-  imagesRootDir: uploadRootDir,
-  logger: console
-});
+const noteService = config.useMemoryService
+  ? createMemoryNoteService({
+      imagesRootDir: uploadRootDir,
+      logger: console
+    })
+  : createNoteService({
+      JmemoModel,
+      imagesRootDir: uploadRootDir,
+      logger: console
+    });
 
 let stopOrphanImageCleanupScheduler = () => {};
 
-if (config.mongoUri) {
+if (!config.useMemoryService && config.mongoUri) {
   void runOrphanImageCleanup({
     JmemoModel,
     imagesRootDir: uploadRootDir,
@@ -59,6 +65,13 @@ const app = createApp({
   noteService,
   uploadRootDir,
   readinessCheck: async () => {
+    if (config.useMemoryService) {
+      return {
+        ok: true,
+        mode: "memory"
+      };
+    }
+
     if (!config.mongoUri) {
       return {
         ok: false,
@@ -88,7 +101,8 @@ const server = app.listen(config.port, () => {
       event: "server_started",
       port: config.port,
       uploadDir: uploadRootDir,
-      logLevel: config.logLevel
+      logLevel: config.logLevel,
+      dataMode: config.useMemoryService ? "memory" : "atlas"
     })
   );
 });

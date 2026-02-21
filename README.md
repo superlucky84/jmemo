@@ -15,6 +15,9 @@ Refactoring workspace for `jwmemo` with a document-first workflow.
 4. Validate env: `pnpm run env:check`
 5. Ping Atlas: `pnpm run db:ping`
 
+If you need to run backend without Atlas (local integration tests), set:
+- `JMEMO_USE_MEMORY_SERVICE=1`
+
 ## Development Commands
 - Frontend dev server: `pnpm run dev`
 - Backend dev server: `pnpm run server:dev`
@@ -22,7 +25,15 @@ Refactoring workspace for `jwmemo` with a document-first workflow.
 - Unit tests: `pnpm run test:unit`
 - Smoke tests: `pnpm run test:smoke`
 - All tests: `pnpm run test`
+- JUnit report: `pnpm run test:report`
+- E2E integration (Playwright API): `pnpm run test:e2e`
+- API+DB smoke script: `pnpm run integration:smoke`
+- Release smoke script: `pnpm run release:smoke`
+- Cutover collection counts: `pnpm run release:counts`
 - Migration dry-run: `pnpm run migrate:reset -- --archive ./mongo-all.archive --dry-run`
+
+`pnpm run test:e2e` starts backend automatically in memory mode
+(`JMEMO_USE_MEMORY_SERVICE=1`, `PORT=4100`) so it does not require Atlas access.
 
 `migrate:reset` restore runner order:
 1. `docker` (if installed)

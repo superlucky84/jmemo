@@ -159,8 +159,8 @@
 - [ ] 배포 후 `live/ready` 확인 + 핵심 스모크(목록/상세/저장/검색)
 
 #### 기본 테스트 코드
-- [ ] 배포 직전 스모크 실행 스크립트 추가
-- [ ] 컷오버 검증용 데이터 건수 체크 스크립트 추가
+- [x] 배포 직전 스모크 실행 스크립트 추가
+- [x] 컷오버 검증용 데이터 건수 체크 스크립트 추가
 
 #### 완료 기준
 - [ ] 2차 마이그레이션 성공 + 수동 체크리스트 PASS + 운영 스모크 PASS
@@ -184,3 +184,4 @@
 - [x] `2026-02-21 18:17 UTC | Phase-6(partial) | done: preview large-doc line-map test + error-code fixture wiring | next: test report format standardization (JUnit/text summary) | commit: (working tree, not committed yet)`
 - [x] `2026-02-21 18:18 UTC | Phase-6 complete | done: junit report script(test:report) + fixture/state/edge coverage aligned | next: Phase-7 integration test scaffolding | commit: (working tree, not committed yet)`
 - [x] `2026-02-21 18:20 UTC | Phase-7(partial) | done: Playwright config + 4 API integration scenarios + integration-smoke script | next: run E2E against live local server and close Phase-7 | commit: (working tree, not committed yet)`
+- [x] `2026-02-21 18:32 UTC | Phase-7/8(partial) | done: memory-service mode for local integration + release-smoke/release-count scripts + unit coverage | next: run test:e2e on non-sandbox host and close Phase-7 completion gate | commit: (working tree, not committed yet)`

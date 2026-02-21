@@ -24,6 +24,8 @@
     "db:ping": "node --env-file=.env scripts/db-ping.mjs",
     "db:shell": "node --env-file=.env scripts/db-shell.mjs",
     "integration:smoke": "node --env-file=.env scripts/integration-smoke.mjs",
+    "release:smoke": "node --env-file=.env scripts/release-smoke.mjs",
+    "release:counts": "node --env-file=.env scripts/cutover-count-check.mjs",
     "migrate:reset": "node --env-file=.env scripts/migrate-reset.mjs",
     "lint": "eslint .",
     "format": "prettier --write .",

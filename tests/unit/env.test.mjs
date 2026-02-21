@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { parseLogLevel, parsePort, resolveAppEnv, validateMongoUri } from "../../src/shared/env.mjs";
+import {
+  parseBooleanFlag,
+  parseLogLevel,
+  parsePort,
+  resolveAppEnv,
+  validateMongoUri
+} from "../../src/shared/env.mjs";
 
 describe("validateMongoUri", () => {
   it("accepts a valid atlas uri", () => {
@@ -43,6 +49,22 @@ describe("parseLogLevel", () => {
   });
 });
 
+describe("parseBooleanFlag", () => {
+  it("parses true values", () => {
+    expect(parseBooleanFlag("true")).toBe(true);
+    expect(parseBooleanFlag("1")).toBe(true);
+  });
+
+  it("parses false values", () => {
+    expect(parseBooleanFlag("false")).toBe(false);
+    expect(parseBooleanFlag("0")).toBe(false);
+  });
+
+  it("throws for invalid value", () => {
+    expect(() => parseBooleanFlag("maybe")).toThrow("Boolean flag must be one of");
+  });
+});
+
 describe("resolveAppEnv", () => {
   it("returns normalized config", () => {
     const config = resolveAppEnv({
@@ -58,13 +80,27 @@ describe("resolveAppEnv", () => {
         "mongodb+srv://user:pass@cluster0.example.mongodb.net/?retryWrites=true&w=majority",
       port: 4010,
       uploadDir: "images",
-      logLevel: "debug"
+      logLevel: "debug",
+      useMemoryService: false
     });
   });
 
   it("allows missing mongo uri when requireMongoUri=false", () => {
     const config = resolveAppEnv({}, { requireMongoUri: false });
     expect(config.mongoUri).toBeNull();
+    expect(config.useMemoryService).toBe(false);
+  });
+
+  it("resolves memory service flag", () => {
+    const config = resolveAppEnv(
+      {
+        MONGODB_URI:
+          "mongodb+srv://user:pass@cluster0.example.mongodb.net/?retryWrites=true&w=majority",
+        JMEMO_USE_MEMORY_SERVICE: "1"
+      },
+      { requireMongoUri: false }
+    );
+
+    expect(config.useMemoryService).toBe(true);
   });
 });
-

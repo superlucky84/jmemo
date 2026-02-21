@@ -55,6 +55,24 @@ export function parseLogLevel(rawValue, fallback = "info") {
   return normalized;
 }
 
+export function parseBooleanFlag(rawValue, fallback = false) {
+  const normalized = (rawValue ?? "").trim().toLowerCase();
+
+  if (!normalized) {
+    return fallback;
+  }
+
+  if (["1", "true", "yes", "on"].includes(normalized)) {
+    return true;
+  }
+
+  if (["0", "false", "no", "off"].includes(normalized)) {
+    return false;
+  }
+
+  throw new Error("Boolean flag must be one of: 1/0, true/false, yes/no, on/off.");
+}
+
 export function resolveAppEnv(rawEnv = process.env, options = {}) {
   const { requireMongoUri = true } = options;
   const mongoUriRaw = rawEnv.MONGODB_URI;
@@ -68,7 +86,7 @@ export function resolveAppEnv(rawEnv = process.env, options = {}) {
     mongoUri,
     port: parsePort(rawEnv.PORT),
     uploadDir: parseUploadDir(rawEnv.UPLOAD_DIR),
-    logLevel: parseLogLevel(rawEnv.LOG_LEVEL)
+    logLevel: parseLogLevel(rawEnv.LOG_LEVEL),
+    useMemoryService: parseBooleanFlag(rawEnv.JMEMO_USE_MEMORY_SERVICE, false)
   };
 }
-

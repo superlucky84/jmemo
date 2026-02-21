@@ -7,6 +7,7 @@ try {
   console.log(`PORT=${config.port}`);
   console.log(`UPLOAD_DIR=${config.uploadDir}`);
   console.log(`LOG_LEVEL=${config.logLevel}`);
+  console.log(`JMEMO_USE_MEMORY_SERVICE=${config.useMemoryService}`);
 } catch (error) {
   console.error(error?.message ?? error);
   process.exit(1);
