@@ -1,0 +1,300 @@
+:root {
+  font-family: "SF Pro Text", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+  color: #1b1c1e;
+  background: #f5f6f8;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 20% 0%, #e4f0ff 0%, transparent 40%),
+    radial-gradient(circle at 80% 100%, #ffe7d8 0%, transparent 45%),
+    #f5f6f8;
+}
+
+#app {
+  min-height: 100vh;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 330px 1fr;
+  min-height: 100vh;
+}
+
+.sidebar {
+  border-right: 1px solid #d7dde5;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(8px);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.panel-title h1 {
+  margin: 0;
+  font-size: 22px;
+  letter-spacing: 0.02em;
+}
+
+.panel-title p {
+  margin: 4px 0 0;
+  color: #5f6875;
+  font-size: 12px;
+}
+
+.toolbar {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 8px;
+}
+
+.search-input,
+.text-input,
+.note-input {
+  border: 1px solid #c5ceda;
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 14px;
+}
+
+.note-input {
+  width: 100%;
+  min-height: 280px;
+  resize: vertical;
+  font-family: "D2Coding", "Menlo", "Consolas", monospace;
+  line-height: 1.5;
+}
+
+.note-input.hidden {
+  display: none;
+}
+
+.button {
+  border: 1px solid #b9c4d2;
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.button:hover {
+  background: #eef4ff;
+}
+
+.button.primary {
+  border-color: #3464d1;
+  background: #3464d1;
+  color: #fff;
+}
+
+.button.primary:hover {
+  background: #294faa;
+}
+
+.button.danger {
+  border-color: #c1353f;
+  color: #c1353f;
+}
+
+.list-area {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: auto;
+}
+
+.list-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: center;
+  border: 1px solid #d4dbe6;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.list-item.active {
+  border-color: #3464d1;
+  box-shadow: 0 0 0 2px rgba(52, 100, 209, 0.15);
+}
+
+.list-main {
+  border: 0;
+  background: transparent;
+  text-align: left;
+  padding: 10px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tags {
+  font-size: 12px;
+  color: #6a7382;
+}
+
+.favorite {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font-size: 18px;
+  padding: 8px 10px;
+  color: #7d8797;
+}
+
+.favorite.on {
+  color: #d89f16;
+}
+
+.content {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.content-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.banner {
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 13px;
+}
+
+.banner.error {
+  border: 1px solid #efb0b5;
+  background: #fceced;
+  color: #8d1f28;
+}
+
+.banner.ok {
+  border: 1px solid #8fd3a6;
+  background: #eaf8ef;
+  color: #1d6b35;
+}
+
+.viewer,
+.empty {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid #d7dde5;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.meta {
+  margin: 0;
+  font-size: 12px;
+  color: #6a7382;
+}
+
+.note-preview {
+  margin-top: 12px;
+  white-space: pre-wrap;
+  line-height: 1.5;
+  font-family: "D2Coding", "Menlo", "Consolas", monospace;
+  background: #f7f9fc;
+  border: 1px solid #dde3ee;
+  border-radius: 10px;
+  padding: 14px;
+}
+
+.editor-grid {
+  display: grid;
+  grid-template-columns: minmax(300px, 1fr) minmax(300px, 1fr);
+  gap: 12px;
+}
+
+.editor-panel,
+.preview-panel {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid #d7dde5;
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.editor-panel label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  color: #4d5767;
+  margin-bottom: 10px;
+}
+
+.hint {
+  font-size: 13px;
+  color: #6a7382;
+}
+
+.monaco-vim-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.monaco-editor-host {
+  width: 100%;
+  min-height: 320px;
+  border: 1px solid #c5ceda;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.monaco-editor-host.hidden {
+  display: none;
+}
+
+.monaco-vim-status {
+  min-height: 22px;
+  font-family: "D2Coding", "Menlo", "Consolas", monospace;
+  font-size: 12px;
+  color: #49566b;
+}
+
+.preview-scroll {
+  max-height: 68vh;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.preview-block {
+  border: 1px solid #e3e8f2;
+  border-radius: 8px;
+  background: #fff;
+}
+
+@media (max-width: 980px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    border-right: 0;
+    border-bottom: 1px solid #d7dde5;
+  }
+
+  .editor-grid {
+    grid-template-columns: 1fr;
+  }
+}

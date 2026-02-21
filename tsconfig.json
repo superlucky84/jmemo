@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "strict": true,
+    "noEmit": true,
+    "isolatedModules": true,
+    "useDefineForClassFields": true,
+    "jsx": "react-jsx",
+    "jsxImportSource": "lithent",
+    "types": ["vite/client", "vitest/globals"],
+    "skipLibCheck": true
+  },
+  "include": ["src", "tests", "vite.config.ts"]
+}
+

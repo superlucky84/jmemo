@@ -14,7 +14,7 @@
 - [x] Phase 0. 기반 정리 및 작업 프레임
 - [x] Phase 1. Atlas 1차 마이그레이션 + reset 자동화
 - [x] Phase 2. `/jnote` 백엔드 호환 구현
-- [ ] Phase 3. Lithent 프런트 기본 화면 구현
+- [x] Phase 3. Lithent 프런트 기본 화면 구현
 - [ ] Phase 4. Monaco + monaco-vim + Preview 동기화
 - [ ] Phase 5. 운영 보강(로그/헬스체크/orphan 배치)
 - [ ] Phase 6. 테스트 강화 Phase(세부/경계 케이스)
@@ -73,32 +73,32 @@
 
 ### Phase 3. Lithent 프런트 기본 화면 구현
 #### 구현 체크리스트
-- [ ] Lithent 기반 앱 부트스트랩 구성
-- [ ] 목록/상세/작성(수정 포함) 화면 구현
-- [ ] 노트 CRUD + 태그 검색 UI 연결
-- [ ] API 클라이언트 경계 단일화(`features/notes/api`)
-- [ ] 저장 실패/미저장 경고 UX 적용(`IC-04`, `IC-06`)
+- [x] Lithent 기반 앱 부트스트랩 구성
+- [x] 목록/상세/작성(수정 포함) 화면 구현
+- [x] 노트 CRUD + 태그 검색 UI 연결
+- [x] API 클라이언트 경계 단일화(`features/notes/api`)
+- [x] 저장 실패/미저장 경고 UX 적용(`IC-04`, `IC-06`)
 
 #### 기본 테스트 코드
-- [ ] 목록/상세/작성 화면 렌더 스모크 테스트 추가
-- [ ] 태그 검색 UI 동작 테스트 추가
-- [ ] 저장 실패 시 편집 버퍼 유지 테스트 추가
+- [x] 목록/상세/작성 화면 렌더 스모크 테스트 추가
+- [x] 태그 검색 UI 동작 테스트 추가
+- [x] 저장 실패 시 편집 버퍼 유지 테스트 추가
 
 #### 완료 기준
-- [ ] 에디터 제외 핵심 기능(노트+태그)이 UI에서 동작
+- [x] 에디터 제외 핵심 기능(노트+태그)이 UI에서 동작
 
 ### Phase 4. Monaco + monaco-vim + Preview 동기화
 #### 구현 체크리스트
-- [ ] Monaco 에디터 마운트 + monaco-vim 연결
-- [ ] Vim `:w`, `:wq` 저장/종료 계약 반영(`IC-05`, `DC-13`)
-- [ ] Preview 라인 매핑 구현(`start/end` 블록 매핑, `IC-09`)
-- [ ] 스크롤 동기화 제어 구현(`rAF`, 동일 라인 skip, 수동 스크롤 cooldown, `DC-11`)
-- [ ] 드래그 이미지 업로드 후 Markdown 자동 삽입 구현
+- [x] Monaco 에디터 마운트 + monaco-vim 연결
+- [x] Vim `:w`, `:wq` 저장/종료 계약 반영(`IC-05`, `DC-13`)
+- [x] Preview 라인 매핑 구현(`start/end` 블록 매핑, `IC-09`)
+- [x] 스크롤 동기화 제어 구현(`rAF`, 동일 라인 skip, 수동 스크롤 cooldown, `DC-11`)
+- [x] 드래그 이미지 업로드 후 Markdown 자동 삽입 구현
 
 #### 기본 테스트 코드
-- [ ] 라인->블록 매핑 유닛 테스트 추가
-- [ ] `:w`/`:wq` 명령 핸들러 테스트 추가
-- [ ] 이미지 드롭 업로드 플로우 테스트 추가
+- [x] 라인->블록 매핑 유닛 테스트 추가
+- [x] `:w`/`:wq` 명령 핸들러 테스트 추가
+- [x] 이미지 드롭 업로드 플로우 테스트 추가
 
 #### 완료 기준
 - [ ] 커서 기반 Preview 동기화와 Vim 저장 플로우가 수동 검증에서 일관 동작
@@ -177,3 +177,5 @@
 - [x] `2026-02-21 17:17 UTC | Phase-1(partial) | done: migrate-reset script + exit-code contract + dry-run/arg/failure tests | next: run real 1st Atlas restore with --yes when approved | commit: (working tree, not committed yet)`
 - [x] `2026-02-21 17:37 UTC | Phase-1 complete | done: user executed real migrate-reset success after mongorestore install + fallback support landed | next: Phase-2 backend compatibility implementation | commit: (working tree, not committed yet)`
 - [x] `2026-02-21 17:37 UTC | Phase-2 complete | done: Express/Mongoose jnote API + IC-12 error contract + upload limits + smoke tests | next: Phase-3 Lithent frontend base | commit: (working tree, not committed yet)`
+- [x] `2026-02-21 17:45 UTC | Phase-3 complete | done: Lithent app scaffold + note list/view/write + search + unsaved warning + frontend smoke/behavior tests | next: Phase-4 Monaco + Vim editor integration | commit: (working tree, not committed yet)`
+- [x] `2026-02-21 17:55 UTC | Phase-4(partial) | done: monaco-vim dynamic mount + :w/:wq command binding + drop-upload markdown insertion + unit/smoke tests | next: manual browser validation then Phase-5 ops hardening | commit: (working tree, not committed yet)`
