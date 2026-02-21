@@ -172,6 +172,54 @@ describe("NotesApp behavior", () => {
     expect(noteInput.value).toContain("![sample](images/20260221/sample.png)");
   });
 
+  it("renders markdown as html in viewer and preview panes", async () => {
+    const listNotes = vi.fn(async () => [
+      {
+        _id: "000000000000000000000001",
+        title: "markdown note",
+        category: [],
+        favorite: false
+      }
+    ]);
+    const getNote = vi.fn(async () => ({
+      _id: "000000000000000000000001",
+      title: "markdown note",
+      note: "# Viewer Title\n\n**viewer-bold**",
+      category: []
+    }));
+
+    const app = <NotesApp api={createBaseApi({ listNotes, getNote })} />;
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    activeUnmounts.push(render(app, container));
+    await flushMicrotasks();
+
+    const noteButton = container.querySelector(".list-main") as HTMLButtonElement;
+    noteButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await flushMicrotasks();
+
+    const viewerHeading = container.querySelector(".viewer .note-preview h1");
+    const viewerStrong = container.querySelector(".viewer .note-preview strong");
+    expect(viewerHeading?.textContent).toBe("Viewer Title");
+    expect(viewerStrong?.textContent).toBe("viewer-bold");
+
+    const editButton = [...container.querySelectorAll(".button")].find(
+      (element) => element.textContent?.trim() === "Edit"
+    ) as HTMLButtonElement;
+    editButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await flushMicrotasks();
+
+    const noteInput = container.querySelector(".note-input") as HTMLTextAreaElement;
+    noteInput.value = "# Preview Title\n\n**preview-bold**";
+    noteInput.dispatchEvent(new Event("input", { bubbles: true }));
+    await flushMicrotasks();
+
+    const previewHeading = container.querySelector(".preview-panel .note-preview h1");
+    const previewStrong = container.querySelector(".preview-panel .note-preview strong");
+    expect(previewHeading?.textContent).toBe("Preview Title");
+    expect(previewStrong?.textContent).toBe("preview-bold");
+  });
+
   it("syncs preview block when editor cursor line changes", async () => {
     const app = <NotesApp api={createBaseApi()} />;
     const container = document.createElement("div");

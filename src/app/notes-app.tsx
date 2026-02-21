@@ -4,6 +4,7 @@ import { NotesApiError, notesApi, type NotesApi } from "../features/notes/api/no
 import type { NoteDetail, NoteSummary } from "../features/notes/types";
 import { MonacoVimEditor } from "../features/editor/monaco-vim-editor";
 import { buildPreviewBlocks, findPreviewBlock } from "../features/preview/line-map";
+import { renderMarkdownToHtml } from "../features/preview/markdown-render";
 
 type ViewMode = "list" | "view" | "write";
 
@@ -453,7 +454,7 @@ export const NotesApp = mount<{ api?: NotesApi }>((renew, props) => {
               <div>
                 <h2>{selected.v.title}</h2>
                 <p className="meta">Tags: {selected.v.category.join(", ") || "-"}</p>
-                <pre className="note-preview">{selected.v.note}</pre>
+                <div className="note-preview" innerHTML={renderMarkdownToHtml(selected.v.note)} />
               </div>
             ) : null}
           </section>
@@ -523,7 +524,7 @@ export const NotesApp = mount<{ api?: NotesApi }>((renew, props) => {
                       data-line-start={String(block.start)}
                       data-line-end={String(block.end)}
                     >
-                      <pre className="note-preview">{block.text || " "}</pre>
+                      <div className="note-preview" innerHTML={renderMarkdownToHtml(block.text || " ")} />
                     </div>
                   ))}
                 </div>
