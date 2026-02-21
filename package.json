@@ -14,6 +14,9 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
+    "env:check": "node --env-file=.env scripts/check-env.mjs",
+    "db:ping": "node --env-file=.env scripts/db-ping.mjs",
+    "db:shell": "node --env-file=.env scripts/db-shell.mjs",
     "lint": "eslint .",
     "format": "prettier --write .",
     "typecheck": "tsc --noEmit"
@@ -21,11 +24,13 @@
   "dependencies": {
     "lithent": "file:../lithent",
     "monaco-editor": "^0.52.2",
-    "monaco-vim": "^0.4.0"
+    "monaco-vim": "^0.4.0",
+    "mongodb": "^7.1.0"
   },
   "devDependencies": {
     "@types/node": "^22.13.9",
     "eslint": "^9.21.0",
+    "mongosh": "^2.7.0",
     "prettier": "^3.5.2",
     "typescript": "^5.8.2",
     "vite": "^6.2.1",
