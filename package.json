@@ -18,6 +18,7 @@
     "test:watch": "vitest",
     "test:smoke": "vitest run tests/smoke",
     "test:unit": "vitest run tests/unit",
+    "test:report": "vitest run --reporter=junit --outputFile=reports/junit.xml",
     "env:check": "node --env-file=.env scripts/check-env.mjs",
     "db:ping": "node --env-file=.env scripts/db-ping.mjs",
     "db:shell": "node --env-file=.env scripts/db-shell.mjs",

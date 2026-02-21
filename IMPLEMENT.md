@@ -17,7 +17,7 @@
 - [x] Phase 3. Lithent 프런트 기본 화면 구현
 - [ ] Phase 4. Monaco + monaco-vim + Preview 동기화
 - [x] Phase 5. 운영 보강(로그/헬스체크/orphan 배치)
-- [ ] Phase 6. 테스트 강화 Phase(세부/경계 케이스)
+- [x] Phase 6. 테스트 강화 Phase(세부/경계 케이스)
 - [ ] Phase 7. 통합 테스트 Phase(Phase 간 연동 검증)
 - [ ] Phase 8. 배포 직전 2차 마이그레이션 + 컷오버
 
@@ -124,7 +124,7 @@
 - [x] 저장 실패/재시도/이탈 경고 UX 경계 테스트 확장
 - [x] Preview 동기화 대용량 문서 케이스 테스트 추가
 - [x] 마이그레이션 스크립트 종료코드 전수 테스트 추가
-- [ ] 테스트 실행 리포트 포맷 통일(JUnit 또는 텍스트 요약)
+- [x] 테스트 실행 리포트 포맷 통일(JUnit 또는 텍스트 요약)
 
 #### 기본 테스트 코드
 - [x] 백엔드 테스트에 오류 코드 snapshot/fixture 추가
@@ -132,7 +132,7 @@
 - [x] 스크립트 테스트에 실패 주입(mock) 케이스 추가
 
 #### 완료 기준
-- [ ] 핵심 모듈의 회귀 위험이 수치/리포트로 확인 가능
+- [x] 핵심 모듈의 회귀 위험이 수치/리포트로 확인 가능
 
 ### Phase 7. 통합 테스트 Phase(Phase 간 연동 검증)
 #### 구현 체크리스트
@@ -182,3 +182,4 @@
 - [x] `2026-02-21 18:15 UTC | Phase-5 complete | done: safe log masking + orphan image batch cleaner(24h guard, daily scheduler) + unit tests | next: Phase-6 test hardening (error-code matrix / state transitions) | commit: (working tree, not committed yet)`
 - [x] `2026-02-21 18:16 UTC | Phase-6(partial) | done: API error-code edge tests + save-fail->retry UI state-transition test | next: preview large-doc sync tests + backend error fixtures/snapshots | commit: (working tree, not committed yet)`
 - [x] `2026-02-21 18:17 UTC | Phase-6(partial) | done: preview large-doc line-map test + error-code fixture wiring | next: test report format standardization (JUnit/text summary) | commit: (working tree, not committed yet)`
+- [x] `2026-02-21 18:18 UTC | Phase-6 complete | done: junit report script(test:report) + fixture/state/edge coverage aligned | next: Phase-7 integration test scaffolding | commit: (working tree, not committed yet)`
