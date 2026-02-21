@@ -18,7 +18,7 @@
 - [ ] Phase 4. Monaco + monaco-vim + Preview 동기화
 - [x] Phase 5. 운영 보강(로그/헬스체크/orphan 배치)
 - [x] Phase 6. 테스트 강화 Phase(세부/경계 케이스)
-- [ ] Phase 7. 통합 테스트 Phase(Phase 간 연동 검증)
+- [x] Phase 7. 통합 테스트 Phase(Phase 간 연동 검증)
 - [ ] Phase 8. 배포 직전 2차 마이그레이션 + 컷오버
 
 ## 4. Phase 상세
@@ -148,7 +148,7 @@
 - [x] API+DB 연동 스모크 테스트 스크립트 추가
 
 #### 완료 기준
-- [ ] 주요 기능이 단일 모듈 테스트가 아닌 실제 연동 경로로 검증됨
+- [x] 주요 기능이 단일 모듈 테스트가 아닌 실제 연동 경로로 검증됨
 
 ### Phase 8. 배포 직전 2차 마이그레이션 + 컷오버
 #### 구현 체크리스트
@@ -185,3 +185,4 @@
 - [x] `2026-02-21 18:18 UTC | Phase-6 complete | done: junit report script(test:report) + fixture/state/edge coverage aligned | next: Phase-7 integration test scaffolding | commit: (working tree, not committed yet)`
 - [x] `2026-02-21 18:20 UTC | Phase-7(partial) | done: Playwright config + 4 API integration scenarios + integration-smoke script | next: run E2E against live local server and close Phase-7 | commit: (working tree, not committed yet)`
 - [x] `2026-02-21 18:32 UTC | Phase-7/8(partial) | done: memory-service mode for local integration + release-smoke/release-count scripts + unit coverage | next: run test:e2e on non-sandbox host and close Phase-7 completion gate | commit: (working tree, not committed yet)`
+- [x] `2026-02-21 18:41 UTC | Phase-7 complete + Phase-8(partial) | done: notesApi<->express integration test + cutover pipeline script(cutover:run) + unit tests | next: execute real Phase-8 on Atlas with latest archive | commit: (working tree, not committed yet)`

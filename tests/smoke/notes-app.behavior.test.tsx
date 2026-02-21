@@ -172,6 +172,54 @@ describe("NotesApp behavior", () => {
     expect(noteInput.value).toContain("![sample](images/20260221/sample.png)");
   });
 
+  it("syncs preview block when editor cursor line changes", async () => {
+    const app = <NotesApp api={createBaseApi()} />;
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    activeUnmounts.push(render(app, container));
+    await flushMicrotasks();
+
+    const newButton = [...container.querySelectorAll(".button")].find(
+      (element) => element.textContent?.trim() === "New"
+    ) as HTMLButtonElement;
+    newButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await flushMicrotasks();
+
+    const noteInput = container.querySelector(".note-input") as HTMLTextAreaElement;
+    const scrollSpy = vi.fn();
+    const rafSpy = vi
+      .spyOn(window, "requestAnimationFrame")
+      .mockImplementation((callback: FrameRequestCallback) => {
+        callback(0);
+        return 1;
+      });
+    vi.spyOn(window, "cancelAnimationFrame").mockImplementation(() => {});
+
+    if (!("scrollIntoView" in Element.prototype)) {
+      Object.defineProperty(Element.prototype, "scrollIntoView", {
+        configurable: true,
+        writable: true,
+        value: () => {}
+      });
+    }
+    vi.spyOn(Element.prototype, "scrollIntoView").mockImplementation(scrollSpy);
+
+    noteInput.value = "line1\nline2\n\nline4\nline5";
+    noteInput.dispatchEvent(new Event("input", { bubbles: true }));
+    await flushMicrotasks();
+
+    const targetOffset = noteInput.value.indexOf("line4");
+    noteInput.selectionStart = targetOffset;
+    noteInput.selectionEnd = targetOffset;
+    noteInput.dispatchEvent(new KeyboardEvent("keyup", { key: "ArrowDown", bubbles: true }));
+    await flushMicrotasks();
+
+    const syncedBlock = container.querySelector('[data-line-start="4"]') as HTMLElement;
+    expect(rafSpy).toHaveBeenCalled();
+    expect(scrollSpy).toHaveBeenCalled();
+    expect(scrollSpy.mock.instances.some((instance) => instance === syncedBlock)).toBe(true);
+  });
+
   it("keeps draft on save failure and allows retry success", async () => {
     const createNote = vi
       .fn()

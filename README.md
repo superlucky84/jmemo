@@ -24,12 +24,14 @@ If you need to run backend without Atlas (local integration tests), set:
 - Backend start: `pnpm run server:start`
 - Unit tests: `pnpm run test:unit`
 - Smoke tests: `pnpm run test:smoke`
+- Integration tests: `pnpm run test:integration`
 - All tests: `pnpm run test`
 - JUnit report: `pnpm run test:report`
 - E2E integration (Playwright API): `pnpm run test:e2e`
 - API+DB smoke script: `pnpm run integration:smoke`
 - Release smoke script: `pnpm run release:smoke`
 - Cutover collection counts: `pnpm run release:counts`
+- Cutover pipeline (migrate -> counts -> smoke): `pnpm run cutover:run -- --archive ./mongo-all.archive --yes`
 - Migration dry-run: `pnpm run migrate:reset -- --archive ./mongo-all.archive --dry-run`
 
 `pnpm run test:e2e` starts backend automatically in memory mode
