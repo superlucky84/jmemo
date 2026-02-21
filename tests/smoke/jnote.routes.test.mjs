@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import request from "supertest";
 import { createApp } from "../../server/app.mjs";
 import { createApiError } from "../../server/errors.mjs";
+import { API_ERROR_STATUS } from "../fixtures/api-errors.fixture.mjs";
 
 function isValidHexObjectId(value) {
   return typeof value === "string" && /^[0-9a-f]{24}$/i.test(value);
@@ -217,14 +218,14 @@ describe("/jnote routes smoke", () => {
     });
 
     const invalidId = await request(app).get("/jnote/read/not-an-object-id");
-    expect(invalidId.status).toBe(400);
+    expect(invalidId.status).toBe(API_ERROR_STATUS.INVALID_ID_FORMAT);
     expect(invalidId.body.error.code).toBe("INVALID_ID_FORMAT");
     expect(invalidId.body.ok).toBe(false);
 
     const notFound = await request(app)
       .post("/jnote/delete")
       .send({ id: "000000000000000000000001" });
-    expect(notFound.status).toBe(404);
+    expect(notFound.status).toBe(API_ERROR_STATUS.NOTE_NOT_FOUND);
     expect(notFound.body.error.code).toBe("NOTE_NOT_FOUND");
     expect(notFound.body.ok).toBe(false);
   });
@@ -241,7 +242,7 @@ describe("/jnote routes smoke", () => {
     const missingTitle = await request(app).post("/jnote/create").send({
       note: "x"
     });
-    expect(missingTitle.status).toBe(400);
+    expect(missingTitle.status).toBe(API_ERROR_STATUS.MISSING_REQUIRED_FIELD);
     expect(missingTitle.body.error.code).toBe("MISSING_REQUIRED_FIELD");
 
     const created = await request(app).post("/jnote/create").send({
@@ -254,11 +255,11 @@ describe("/jnote routes smoke", () => {
       id: created.body._id,
       favorite: "invalid"
     });
-    expect(invalidFavorite.status).toBe(400);
+    expect(invalidFavorite.status).toBe(API_ERROR_STATUS.VALIDATION_ERROR);
     expect(invalidFavorite.body.error.code).toBe("VALIDATION_ERROR");
 
     const missingFile = await request(app).post("/jnote/upload");
-    expect(missingFile.status).toBe(400);
+    expect(missingFile.status).toBe(API_ERROR_STATUS.MISSING_REQUIRED_FIELD);
     expect(missingFile.body.error.code).toBe("MISSING_REQUIRED_FIELD");
   });
 
@@ -283,14 +284,14 @@ describe("/jnote routes smoke", () => {
     const svg = await request(app)
       .post("/jnote/upload")
       .attach("pict", Buffer.from("<svg></svg>"), "bad.svg");
-    expect(svg.status).toBe(415);
+    expect(svg.status).toBe(API_ERROR_STATUS.UNSUPPORTED_MEDIA_TYPE);
     expect(svg.body.error.code).toBe("UNSUPPORTED_MEDIA_TYPE");
 
     const largeBuffer = Buffer.alloc(10 * 1024 * 1024 + 1, 1);
     const oversized = await request(app)
       .post("/jnote/upload")
       .attach("pict", largeBuffer, "too-large.png");
-    expect(oversized.status).toBe(413);
+    expect(oversized.status).toBe(API_ERROR_STATUS.FILE_TOO_LARGE);
     expect(oversized.body.error.code).toBe("FILE_TOO_LARGE");
   });
 });

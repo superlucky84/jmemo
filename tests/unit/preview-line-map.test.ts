@@ -35,5 +35,23 @@ describe("findPreviewBlock", () => {
   it("falls back to first block when line is before first block", () => {
     expect(findPreviewBlock(blocks, 0)).toEqual(blocks[0]);
   });
-});
 
+  it("handles large note input without losing block lookup", () => {
+    const lines: string[] = [];
+
+    for (let index = 1; index <= 1000; index += 1) {
+      lines.push(`line-${index}`);
+      if (index % 10 === 0) {
+        lines.push("");
+      }
+    }
+
+    const generatedBlocks = buildPreviewBlocks(lines.join("\n"));
+    expect(generatedBlocks.length).toBeGreaterThan(90);
+
+    const blockAround500 = findPreviewBlock(generatedBlocks, 500);
+    expect(blockAround500).not.toBeNull();
+    expect((blockAround500?.start ?? 0) <= 500).toBe(true);
+    expect((blockAround500?.end ?? 0) >= 500).toBe(true);
+  });
+});

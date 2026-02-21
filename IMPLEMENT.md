@@ -122,12 +122,12 @@
 #### 구현 체크리스트
 - [x] API 경계값/예외 케이스 확장 테스트 추가(`IC-12` 코드별)
 - [x] 저장 실패/재시도/이탈 경고 UX 경계 테스트 확장
-- [ ] Preview 동기화 대용량 문서 케이스 테스트 추가
+- [x] Preview 동기화 대용량 문서 케이스 테스트 추가
 - [x] 마이그레이션 스크립트 종료코드 전수 테스트 추가
 - [ ] 테스트 실행 리포트 포맷 통일(JUnit 또는 텍스트 요약)
 
 #### 기본 테스트 코드
-- [ ] 백엔드 테스트에 오류 코드 snapshot/fixture 추가
+- [x] 백엔드 테스트에 오류 코드 snapshot/fixture 추가
 - [x] 프런트 테스트에 상태 전이 케이스(`dirty -> save-fail -> retry`) 추가
 - [x] 스크립트 테스트에 실패 주입(mock) 케이스 추가
 
@@ -181,3 +181,4 @@
 - [x] `2026-02-21 17:55 UTC | Phase-4(partial) | done: monaco-vim dynamic mount + :w/:wq command binding + drop-upload markdown insertion + unit/smoke tests | next: manual browser validation then Phase-5 ops hardening | commit: (working tree, not committed yet)`
 - [x] `2026-02-21 18:15 UTC | Phase-5 complete | done: safe log masking + orphan image batch cleaner(24h guard, daily scheduler) + unit tests | next: Phase-6 test hardening (error-code matrix / state transitions) | commit: (working tree, not committed yet)`
 - [x] `2026-02-21 18:16 UTC | Phase-6(partial) | done: API error-code edge tests + save-fail->retry UI state-transition test | next: preview large-doc sync tests + backend error fixtures/snapshots | commit: (working tree, not committed yet)`
+- [x] `2026-02-21 18:17 UTC | Phase-6(partial) | done: preview large-doc line-map test + error-code fixture wiring | next: test report format standardization (JUnit/text summary) | commit: (working tree, not committed yet)`
