@@ -187,3 +187,4 @@
 - [x] `2026-02-21 18:32 UTC | Phase-7/8(partial) | done: memory-service mode for local integration + release-smoke/release-count scripts + unit coverage | next: run test:e2e on non-sandbox host and close Phase-7 completion gate | commit: (working tree, not committed yet)`
 - [x] `2026-02-21 18:41 UTC | Phase-7 complete + Phase-8(partial) | done: notesApi<->express integration test + cutover pipeline script(cutover:run) + unit tests | next: execute real Phase-8 on Atlas with latest archive | commit: (working tree, not committed yet)`
 - [x] `2026-02-21 18:43 UTC | docs/runbook update | done: CUTOVER_RUNBOOK.md + restart checklist sync | next: run pnpm run cutover:run -- --archive ./mongo-all.archive --yes on real Atlas env | commit: dfb7aa0`
+- [x] `2026-02-21 18:44 UTC | Phase-8 rehearsal | done: cutover pipeline dry-run success with local .env archive | next: execute real cutover with --yes on production network | commit: (working tree, not committed yet)`
