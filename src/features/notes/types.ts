@@ -33,3 +33,8 @@ export type NotesApiErrorPayload = {
   requestId?: string;
 };
 
+export type AuthStatus = {
+  ok: true;
+  enabled: boolean;
+  authenticated: boolean;
+};

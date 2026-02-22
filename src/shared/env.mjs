@@ -73,6 +73,25 @@ export function parseBooleanFlag(rawValue, fallback = false) {
   throw new Error("Boolean flag must be one of: 1/0, true/false, yes/no, on/off.");
 }
 
+export function parseAuthPassword(rawValue, fallback = "") {
+  const normalized = String(rawValue ?? "").trim();
+  return normalized || fallback;
+}
+
+export function parseSessionTtlHours(rawValue, fallback = 12) {
+  const value = String(rawValue ?? "").trim();
+  if (!value) {
+    return fallback;
+  }
+
+  const hours = Number(value);
+  if (!Number.isInteger(hours) || hours < 1 || hours > 720) {
+    throw new Error("AUTH_SESSION_TTL_HOURS must be an integer between 1 and 720.");
+  }
+
+  return hours;
+}
+
 export function resolveAppEnv(rawEnv = process.env, options = {}) {
   const { requireMongoUri = true } = options;
   const mongoUriRaw = rawEnv.MONGODB_URI;
@@ -87,6 +106,8 @@ export function resolveAppEnv(rawEnv = process.env, options = {}) {
     port: parsePort(rawEnv.PORT),
     uploadDir: parseUploadDir(rawEnv.UPLOAD_DIR),
     logLevel: parseLogLevel(rawEnv.LOG_LEVEL),
-    useMemoryService: parseBooleanFlag(rawEnv.JMEMO_USE_MEMORY_SERVICE, false)
+    useMemoryService: parseBooleanFlag(rawEnv.JMEMO_USE_MEMORY_SERVICE, false),
+    authPassword: parseAuthPassword(rawEnv.AUTH_PASSWORD),
+    authSessionTtlHours: parseSessionTtlHours(rawEnv.AUTH_SESSION_TTL_HOURS, 12)
   };
 }

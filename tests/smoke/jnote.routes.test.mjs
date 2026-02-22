@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import request from "supertest";
 import { createApp } from "../../server/app.mjs";
+import { createAuthService } from "../../server/auth.mjs";
 import { createApiError } from "../../server/errors.mjs";
 import { API_ERROR_STATUS } from "../fixtures/api-errors.fixture.mjs";
 
@@ -261,6 +262,87 @@ describe("/jnote routes smoke", () => {
     const missingFile = await request(app).post("/jnote/upload");
     expect(missingFile.status).toBe(API_ERROR_STATUS.MISSING_REQUIRED_FIELD);
     expect(missingFile.body.error.code).toBe("MISSING_REQUIRED_FIELD");
+  });
+
+  it("protects write routes when auth is enabled", async () => {
+    const uploadRootDir = await mkdtemp(join(tmpdir(), "jmemo-upload-"));
+    tempDirs.push(uploadRootDir);
+    const app = createApp({
+      noteService: createMemoryNoteService(),
+      uploadRootDir,
+      readinessCheck: async () => ({ ok: true }),
+      authService: createAuthService({
+        password: "test-password"
+      })
+    });
+
+    const unauthCreate = await request(app).post("/jnote/create").send({
+      title: "blocked",
+      note: "blocked"
+    });
+    expect(unauthCreate.status).toBe(API_ERROR_STATUS.UNAUTHORIZED);
+    expect(unauthCreate.body.error.code).toBe("UNAUTHORIZED");
+
+    const agent = request.agent(app);
+    const badLogin = await agent.post("/auth/login").send({ password: "wrong" });
+    expect(badLogin.status).toBe(API_ERROR_STATUS.UNAUTHORIZED);
+
+    const login = await agent.post("/auth/login").send({ password: "test-password" });
+    expect(login.status).toBe(200);
+    expect(login.body.authenticated).toBe(true);
+
+    const createAfterLogin = await agent.post("/jnote/create").send({
+      title: "allowed",
+      note: "after login"
+    });
+    expect(createAfterLogin.status).toBe(200);
+
+    const meAfterLogin = await agent.get("/auth/me");
+    expect(meAfterLogin.status).toBe(200);
+    expect(meAfterLogin.body.authenticated).toBe(true);
+
+    const logout = await agent.post("/auth/logout");
+    expect(logout.status).toBe(200);
+    expect(logout.body.authenticated).toBe(false);
+
+    const blockedAgain = await agent.post("/jnote/delete").send({
+      id: createAfterLogin.body._id
+    });
+    expect(blockedAgain.status).toBe(API_ERROR_STATUS.UNAUTHORIZED);
+    expect(blockedAgain.body.error.code).toBe("UNAUTHORIZED");
+  });
+
+  it("expires authenticated session after ttl and blocks write routes again", async () => {
+    const uploadRootDir = await mkdtemp(join(tmpdir(), "jmemo-upload-"));
+    tempDirs.push(uploadRootDir);
+    const app = createApp({
+      noteService: createMemoryNoteService(),
+      uploadRootDir,
+      readinessCheck: async () => ({ ok: true }),
+      authService: createAuthService({
+        password: "test-password",
+        sessionTtlMs: 5
+      })
+    });
+
+    const agent = request.agent(app);
+    const login = await agent.post("/auth/login").send({ password: "test-password" });
+    expect(login.status).toBe(200);
+
+    await new Promise((resolve) => {
+      setTimeout(resolve, 25);
+    });
+
+    const meAfterExpiry = await agent.get("/auth/me");
+    expect(meAfterExpiry.status).toBe(200);
+    expect(meAfterExpiry.body.authenticated).toBe(false);
+
+    const blockedCreate = await agent.post("/jnote/create").send({
+      title: "blocked-after-expiry",
+      note: "blocked"
+    });
+    expect(blockedCreate.status).toBe(API_ERROR_STATUS.UNAUTHORIZED);
+    expect(blockedCreate.body.error.code).toBe("UNAUTHORIZED");
   });
 
   it("accepts png upload and rejects svg / oversize files", async () => {

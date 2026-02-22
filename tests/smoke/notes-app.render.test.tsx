@@ -2,8 +2,15 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { render } from "lithent";
 import { NotesApp } from "../../src/app/notes-app";
+import type { AuthStatus } from "../../src/features/notes/types";
 
 const activeUnmounts: Array<() => void> = [];
+
+const authStatus = (enabled: boolean, authenticated: boolean): AuthStatus => ({
+  ok: true,
+  enabled,
+  authenticated
+});
 
 afterEach(() => {
   while (activeUnmounts.length) {
@@ -18,6 +25,15 @@ describe("NotesApp render smoke", () => {
     const app = (
       <NotesApp
         api={{
+          async getAuthStatus() {
+            return authStatus(false, true);
+          },
+          async login() {
+            return authStatus(true, true);
+          },
+          async logout() {
+            return authStatus(true, false);
+          },
           async listNotes() {
             return [];
           },
@@ -75,6 +91,7 @@ describe("NotesApp render smoke", () => {
     expect(container.textContent).toContain("jmemo");
     expect(container.textContent).toContain("Search");
     expect(container.textContent).toContain("New");
+    expect(container.querySelector(".app-shell.theme-dark")).not.toBeNull();
+    expect(container.querySelector(".command-footer")).not.toBeNull();
   });
 });
-

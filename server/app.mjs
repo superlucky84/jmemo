@@ -4,9 +4,20 @@ import { resolve } from "node:path";
 import { createErrorMiddleware, createApiError } from "./errors.mjs";
 import { createJnoteRouter } from "./routes/jnote.mjs";
 import { toSafeLogLine } from "./logger.mjs";
+import { createAuthService } from "./auth.mjs";
 
 function nowIso() {
   return new Date().toISOString();
+}
+
+function asyncRoute(handler) {
+  return async (req, res, next) => {
+    try {
+      await handler(req, res, next);
+    } catch (error) {
+      next(error);
+    }
+  };
 }
 
 export function createApp(options = {}) {
@@ -14,7 +25,8 @@ export function createApp(options = {}) {
     noteService,
     readinessCheck = async () => ({ ok: true }),
     logger = console,
-    uploadRootDir = resolve(process.cwd(), "images")
+    uploadRootDir = resolve(process.cwd(), "images"),
+    authService = createAuthService({ password: "" })
   } = options;
 
   if (!noteService) {
@@ -84,11 +96,98 @@ export function createApp(options = {}) {
     }
   });
 
+  const getAuthState = (req) => {
+    if (!authService.enabled) {
+      return {
+        enabled: false,
+        authenticated: true
+      };
+    }
+
+    const token = authService.getTokenFromRequest(req);
+    return {
+      enabled: true,
+      authenticated: authService.isValidToken(token)
+    };
+  };
+
+  const requireWriteAuth = (req, _res, next) => {
+    const authState = getAuthState(req);
+    if (authState.authenticated) {
+      next();
+      return;
+    }
+
+    next(
+      createApiError("UNAUTHORIZED", {
+        message: "Authentication required"
+      })
+    );
+  };
+
+  app.get(
+    "/auth/me",
+    asyncRoute(async (req, res) => {
+      const authState = getAuthState(req);
+      res.json({
+        ok: true,
+        enabled: authState.enabled,
+        authenticated: authState.authenticated
+      });
+    })
+  );
+
+  app.post(
+    "/auth/login",
+    asyncRoute(async (req, res) => {
+      if (!authService.enabled) {
+        res.json({
+          ok: true,
+          enabled: false,
+          authenticated: true
+        });
+        return;
+      }
+
+      const session = authService.createSession(req.body?.password);
+      if (!session) {
+        throw createApiError("UNAUTHORIZED", {
+          message: "Invalid password"
+        });
+      }
+
+      authService.setSessionCookie(res, session.token);
+      res.json({
+        ok: true,
+        enabled: true,
+        authenticated: true
+      });
+    })
+  );
+
+  app.post(
+    "/auth/logout",
+    asyncRoute(async (req, res) => {
+      const token = authService.getTokenFromRequest(req);
+      if (token) {
+        authService.revokeToken(token);
+      }
+
+      authService.clearSessionCookie(res);
+      res.json({
+        ok: true,
+        enabled: authService.enabled,
+        authenticated: false
+      });
+    })
+  );
+
   app.use(
     "/jnote",
     createJnoteRouter({
       noteService,
-      uploadRootDir
+      uploadRootDir,
+      requireWriteAuth
     })
   );
 

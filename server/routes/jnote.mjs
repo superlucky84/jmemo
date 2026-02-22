@@ -103,7 +103,11 @@ function asyncRoute(handler) {
 }
 
 export function createJnoteRouter(options = {}) {
-  const { noteService, uploadRootDir = resolve(process.cwd(), "images") } = options;
+  const {
+    noteService,
+    uploadRootDir = resolve(process.cwd(), "images"),
+    requireWriteAuth = (_req, _res, next) => next()
+  } = options;
 
   if (!noteService) {
     throw new Error("noteService is required for createJnoteRouter");
@@ -114,6 +118,7 @@ export function createJnoteRouter(options = {}) {
 
   router.post(
     "/create",
+    requireWriteAuth,
     asyncRoute(async (req, res) => {
       const created = await noteService.createNote({
         title: req.body.title,
@@ -148,6 +153,7 @@ export function createJnoteRouter(options = {}) {
 
   router.post(
     "/update",
+    requireWriteAuth,
     asyncRoute(async (req, res) => {
       const updated = await noteService.updateNote({
         id: req.body.id,
@@ -163,13 +169,14 @@ export function createJnoteRouter(options = {}) {
 
   router.post(
     "/delete",
+    requireWriteAuth,
     asyncRoute(async (req, res) => {
       const response = await noteService.deleteNote(req.body.id);
       res.json(response);
     })
   );
 
-  router.post("/upload", (req, res, next) => {
+  router.post("/upload", requireWriteAuth, (req, res, next) => {
     uploader.single("pict")(req, res, (error) => {
       if (error) {
         next(toUploadError(error));

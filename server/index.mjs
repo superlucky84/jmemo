@@ -1,5 +1,6 @@
 import { resolve } from "node:path";
 import { createApp } from "./app.mjs";
+import { createAuthService } from "./auth.mjs";
 import { resolveAppEnv } from "../src/shared/env.mjs";
 import { connectMongo, disconnectMongo, pingMongo } from "./db.mjs";
 import { toSafeLogLine } from "./logger.mjs";
@@ -38,6 +39,22 @@ const noteService = config.useMemoryService
       logger: console
     });
 
+const authService = createAuthService({
+  password: config.authPassword,
+  sessionTtlMs: config.authSessionTtlHours * 60 * 60 * 1000
+});
+
+if (!authService.enabled) {
+  console.warn(
+    toSafeLogLine({
+      time: new Date().toISOString(),
+      level: "warn",
+      event: "auth_disabled",
+      message: "AUTH_PASSWORD is empty. Write APIs are not protected."
+    })
+  );
+}
+
 let stopOrphanImageCleanupScheduler = () => {};
 
 if (!config.useMemoryService && config.mongoUri) {
@@ -64,6 +81,7 @@ if (!config.useMemoryService && config.mongoUri) {
 const app = createApp({
   noteService,
   uploadRootDir,
+  authService,
   readinessCheck: async () => {
     if (config.useMemoryService) {
       return {
@@ -102,7 +120,8 @@ const server = app.listen(config.port, () => {
       port: config.port,
       uploadDir: uploadRootDir,
       logLevel: config.logLevel,
-      dataMode: config.useMemoryService ? "memory" : "atlas"
+      dataMode: config.useMemoryService ? "memory" : "atlas",
+      authEnabled: authService.enabled
     })
   );
 });

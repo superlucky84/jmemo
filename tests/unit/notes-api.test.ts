@@ -16,6 +16,29 @@ afterEach(() => {
 });
 
 describe("notesApi", () => {
+  it("calls auth status endpoint with credentials", async () => {
+    const fetchMock = vi.fn(async () =>
+      createJsonResponse({
+        ok: true,
+        enabled: true,
+        authenticated: false
+      })
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const status = await notesApi.getAuthStatus();
+
+    expect(status.enabled).toBe(true);
+    expect(status.authenticated).toBe(false);
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/auth/me",
+      expect.objectContaining({
+        method: "GET",
+        credentials: "include"
+      })
+    );
+  });
+
   it("normalizes list response from array", async () => {
     vi.stubGlobal(
       "fetch",
@@ -90,4 +113,3 @@ describe("notesApi", () => {
     });
   });
 });
-

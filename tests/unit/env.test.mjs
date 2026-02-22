@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
+  parseAuthPassword,
   parseBooleanFlag,
   parseLogLevel,
   parsePort,
+  parseSessionTtlHours,
   resolveAppEnv,
   validateMongoUri
 } from "../../src/shared/env.mjs";
@@ -65,6 +67,30 @@ describe("parseBooleanFlag", () => {
   });
 });
 
+describe("parseAuthPassword", () => {
+  it("trims value", () => {
+    expect(parseAuthPassword("  pw  ")).toBe("pw");
+  });
+
+  it("returns fallback for empty value", () => {
+    expect(parseAuthPassword("", "fallback")).toBe("fallback");
+  });
+});
+
+describe("parseSessionTtlHours", () => {
+  it("uses default for empty value", () => {
+    expect(parseSessionTtlHours(undefined, 12)).toBe(12);
+  });
+
+  it("parses integer hours", () => {
+    expect(parseSessionTtlHours("24")).toBe(24);
+  });
+
+  it("rejects invalid hours", () => {
+    expect(() => parseSessionTtlHours("0")).toThrow("AUTH_SESSION_TTL_HOURS");
+  });
+});
+
 describe("resolveAppEnv", () => {
   it("returns normalized config", () => {
     const config = resolveAppEnv({
@@ -72,7 +98,9 @@ describe("resolveAppEnv", () => {
         "mongodb+srv://user:pass@cluster0.example.mongodb.net/?retryWrites=true&w=majority",
       PORT: "4010",
       UPLOAD_DIR: "images",
-      LOG_LEVEL: "debug"
+      LOG_LEVEL: "debug",
+      AUTH_PASSWORD: "pw",
+      AUTH_SESSION_TTL_HOURS: "24"
     });
 
     expect(config).toEqual({
@@ -81,7 +109,9 @@ describe("resolveAppEnv", () => {
       port: 4010,
       uploadDir: "images",
       logLevel: "debug",
-      useMemoryService: false
+      useMemoryService: false,
+      authPassword: "pw",
+      authSessionTtlHours: 24
     });
   });
 
@@ -89,6 +119,8 @@ describe("resolveAppEnv", () => {
     const config = resolveAppEnv({}, { requireMongoUri: false });
     expect(config.mongoUri).toBeNull();
     expect(config.useMemoryService).toBe(false);
+    expect(config.authPassword).toBe("");
+    expect(config.authSessionTtlHours).toBe(12);
   });
 
   it("resolves memory service flag", () => {
@@ -102,5 +134,6 @@ describe("resolveAppEnv", () => {
     );
 
     expect(config.useMemoryService).toBe(true);
+    expect(config.authPassword).toBe("");
   });
 });

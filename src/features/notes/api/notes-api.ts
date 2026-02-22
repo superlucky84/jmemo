@@ -1,4 +1,5 @@
 import type {
+  AuthStatus,
   NoteDetail,
   NoteId,
   NotesApiErrorPayload,
@@ -67,6 +68,7 @@ async function requestJson<T>(path: string, options: RequestOptions = {}): Promi
   const method = options.method ?? "GET";
   const response = await fetch(path, {
     method,
+    credentials: "include",
     headers: {
       "content-type": "application/json"
     },
@@ -110,6 +112,9 @@ function normalizeDetail(note: NoteDetail): NoteDetail {
 }
 
 export type NotesApi = {
+  getAuthStatus(): Promise<AuthStatus>;
+  login(password: string): Promise<AuthStatus>;
+  logout(): Promise<AuthStatus>;
   listNotes(query?: ListQuery): Promise<NoteSummary[]>;
   listNotesPaged(query?: ListQuery): Promise<NotesPage>;
   getNote(id: NoteId): Promise<NoteDetail>;
@@ -126,6 +131,24 @@ export type NotesApi = {
 };
 
 export const notesApi: NotesApi = {
+  async getAuthStatus() {
+    return requestJson<AuthStatus>("/auth/me");
+  },
+
+  async login(password) {
+    return requestJson<AuthStatus>("/auth/login", {
+      method: "POST",
+      body: { password }
+    });
+  },
+
+  async logout() {
+    return requestJson<AuthStatus>("/auth/logout", {
+      method: "POST",
+      body: {}
+    });
+  },
+
   async listNotes(query = {}) {
     const path = `/jnote/read${buildQueryString({
       searchString: query.searchString
@@ -208,6 +231,7 @@ export const notesApi: NotesApi = {
 
     const response = await fetch("/jnote/upload", {
       method: "POST",
+      credentials: "include",
       body: form
     });
 
@@ -228,4 +252,3 @@ export const notesApi: NotesApi = {
     };
   }
 };
-

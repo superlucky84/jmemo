@@ -3,6 +3,7 @@ import { state } from "lithent/helper";
 import { NotesApiError, notesApi, type NotesApi } from "../features/notes/api/notes-api";
 import type { NoteDetail, NoteSummary } from "../features/notes/types";
 import { MonacoVimEditor } from "../features/editor/monaco-vim-editor";
+import { resolveExCommand } from "../features/editor/ex-command-dispatcher";
 import { buildPreviewBlocks, findPreviewBlock } from "../features/preview/line-map";
 import { renderMarkdownToHtml } from "../features/preview/markdown-render";
 
@@ -28,6 +29,23 @@ function toDisplayError(error: unknown) {
   return String(error);
 }
 
+function isTextInputTarget(target: EventTarget | null) {
+  if (!(target instanceof Element)) {
+    return false;
+  }
+
+  const tag = target.tagName.toLowerCase();
+  if (tag === "input" || tag === "textarea") {
+    return true;
+  }
+
+  if (target instanceof HTMLElement && target.isContentEditable) {
+    return true;
+  }
+
+  return Boolean(target.closest(".monaco-editor"));
+}
+
 export const NotesApp = mount<{ api?: NotesApi }>((renew, props) => {
   const api = props.api ?? notesApi;
 
@@ -39,6 +57,11 @@ export const NotesApp = mount<{ api?: NotesApi }>((renew, props) => {
   const errorMessage = state("", renew);
   const statusMessage = state("", renew);
   const searchText = state("", renew);
+  const authLoading = state(true, renew);
+  const authEnabled = state(true, renew);
+  const authenticated = state(false, renew);
+  const authExpired = state(false, renew);
+  const authPassword = state("", renew);
 
   const notes = state<NoteSummary[]>([], renew);
   const selected = state<NoteDetail | null>(null, renew);
@@ -51,20 +74,80 @@ export const NotesApp = mount<{ api?: NotesApi }>((renew, props) => {
   const editorCursorLine = state(1, renew);
 
   const previewContainerRef = ref<HTMLElement | null>(null);
+  const commandInputRef = ref<HTMLInputElement | null>(null);
   const previewCooldownUntil = state(0, renew);
+  const previewFollowBottom = state(false, renew);
+  const commandInput = state("", renew);
+  const commandFeedback = state("Ready.", renew);
+  const commandFeedbackError = state(false, renew);
 
   let lastSyncedLine = 0;
   let lastSyncedBlockStart = -1;
   let syncFrameId = 0;
   let programmaticScrollLock = false;
+  const PREVIEW_BOTTOM_THRESHOLD = 3;
 
   const clearStatus = () => {
     errorMessage.v = "";
     statusMessage.v = "";
+    authExpired.v = false;
   };
 
   const setFailure = (error: unknown) => {
     errorMessage.v = toDisplayError(error);
+  };
+
+  const setAuthExpired = (message = "Session expired. Please login again.") => {
+    authenticated.v = false;
+    authExpired.v = true;
+    errorMessage.v = message;
+    statusMessage.v = "";
+  };
+
+  const handleApiFailure = (
+    error: unknown,
+    options: { authMessage?: string; commandMessage?: string } = {}
+  ) => {
+    if (error instanceof NotesApiError && error.status === 401) {
+      setAuthExpired(options.authMessage);
+      if (options.commandMessage) {
+        setCommandStatus(options.commandMessage, true);
+      }
+      return;
+    }
+
+    setFailure(error);
+  };
+
+  const setCommandStatus = (message: string, isError = false) => {
+    commandFeedback.v = message;
+    commandFeedbackError.v = isError;
+  };
+
+  const canWrite = () => !authEnabled.v || authenticated.v;
+
+  const requireWriteAccess = (message = "Login is required for write operations.") => {
+    if (canWrite()) {
+      return true;
+    }
+
+    errorMessage.v = message;
+    setCommandStatus(message, true);
+    return false;
+  };
+
+  const focusCommandInput = (prefill = "") => {
+    commandInput.v = prefill;
+    requestAnimationFrame(() => {
+      const input = commandInputRef.value;
+      if (!input) {
+        return;
+      }
+
+      input.focus();
+      const cursor = input.value.length;
+      input.setSelectionRange(cursor, cursor);
+    });
   };
 
   const markDirty = () => {
@@ -81,7 +164,43 @@ export const NotesApp = mount<{ api?: NotesApi }>((renew, props) => {
     if (programmaticScrollLock) {
       return;
     }
+    previewFollowBottom.v = false;
     pauseAutoSyncTemporarily();
+  };
+
+  const schedulePreviewSync = (runner: () => void) => {
+    if (syncFrameId) {
+      cancelAnimationFrame(syncFrameId);
+    }
+
+    syncFrameId = requestAnimationFrame(() => {
+      runner();
+      syncFrameId = 0;
+    });
+  };
+
+  const syncPreviewToBottom = () => {
+    const container = previewContainerRef.value;
+    if (!container) {
+      return;
+    }
+
+    const blockNodes = [...container.querySelectorAll<HTMLElement>("[data-line-start]")];
+    const lastNode = blockNodes[blockNodes.length - 1] ?? null;
+    if (!lastNode) {
+      return;
+    }
+
+    programmaticScrollLock = true;
+    lastSyncedBlockStart = Number(lastNode.dataset.lineStart ?? "-1");
+    lastNode.scrollIntoView({
+      block: "end",
+      behavior: "auto"
+    });
+
+    window.setTimeout(() => {
+      programmaticScrollLock = false;
+    }, 80);
   };
 
   const syncPreviewToLine = (lineNumber: number) => {
@@ -131,23 +250,31 @@ export const NotesApp = mount<{ api?: NotesApi }>((renew, props) => {
   const handleEditorCursorLineChange = (lineNumber: number) => {
     editorCursorLine.v = lineNumber;
 
-    if (lineNumber === lastSyncedLine) {
+    const totalLines = Math.max(1, String(formNote.v ?? "").split("\n").length);
+    const nearBottom = totalLines - lineNumber <= PREVIEW_BOTTOM_THRESHOLD;
+    const cooldownActive = Date.now() < previewCooldownUntil.v;
+
+    if (!cooldownActive && nearBottom) {
+      previewFollowBottom.v = true;
+    }
+
+    if (!nearBottom) {
+      previewFollowBottom.v = false;
+    }
+
+    if (previewFollowBottom.v && !cooldownActive) {
+      lastSyncedLine = lineNumber;
+      schedulePreviewSync(syncPreviewToBottom);
       return;
     }
 
-    if (Date.now() < previewCooldownUntil.v) {
+    if (lineNumber === lastSyncedLine || cooldownActive) {
       return;
     }
 
     lastSyncedLine = lineNumber;
-
-    if (syncFrameId) {
-      cancelAnimationFrame(syncFrameId);
-    }
-
-    syncFrameId = requestAnimationFrame(() => {
+    schedulePreviewSync(() => {
       syncPreviewToLine(lineNumber);
-      syncFrameId = 0;
     });
   };
 
@@ -180,8 +307,71 @@ export const NotesApp = mount<{ api?: NotesApi }>((renew, props) => {
     }
   };
 
+  const loadAuthStatus = async () => {
+    authLoading.v = true;
+
+    try {
+      const status = await api.getAuthStatus();
+      authEnabled.v = Boolean(status.enabled);
+      authenticated.v = Boolean(status.authenticated);
+      if (authenticated.v) {
+        authExpired.v = false;
+      }
+    } catch (error) {
+      authEnabled.v = false;
+      authenticated.v = true;
+      setFailure(error);
+    } finally {
+      authLoading.v = false;
+    }
+  };
+
+  const login = async () => {
+    const password = authPassword.v.trim();
+    if (!password) {
+      errorMessage.v = "password is required";
+      return;
+    }
+
+    clearStatus();
+    authLoading.v = true;
+
+    try {
+      const status = await api.login(password);
+      authEnabled.v = Boolean(status.enabled);
+      authenticated.v = Boolean(status.authenticated);
+      authExpired.v = false;
+      authPassword.v = "";
+      statusMessage.v = "Authenticated.";
+      setCommandStatus("Authentication complete.");
+    } catch (error) {
+      setFailure(error);
+    } finally {
+      authLoading.v = false;
+    }
+  };
+
+  const logout = async () => {
+    clearStatus();
+    authLoading.v = true;
+
+    try {
+      const status = await api.logout();
+      authEnabled.v = Boolean(status.enabled);
+      authenticated.v = Boolean(status.authenticated);
+      authExpired.v = false;
+      statusMessage.v = "Signed out.";
+      setCommandStatus("Signed out.");
+    } catch (error) {
+      setFailure(error);
+    } finally {
+      authLoading.v = false;
+    }
+  };
+
   const openNote = async (id: string) => {
     mode.v = "view";
+    previewFollowBottom.v = false;
     detailLoading.v = true;
     clearStatus();
 
@@ -195,7 +385,12 @@ export const NotesApp = mount<{ api?: NotesApi }>((renew, props) => {
   };
 
   const startCreate = () => {
+    if (!requireWriteAccess()) {
+      return;
+    }
+
     mode.v = "write";
+    previewFollowBottom.v = false;
     editingId.v = null;
     selected.v = null;
     setFormFromDetail(null);
@@ -208,7 +403,12 @@ export const NotesApp = mount<{ api?: NotesApi }>((renew, props) => {
       return;
     }
 
+    if (!requireWriteAccess()) {
+      return;
+    }
+
     mode.v = "write";
+    previewFollowBottom.v = false;
     editingId.v = selected.v._id;
     setFormFromDetail(selected.v);
     dirty.v = false;
@@ -221,6 +421,7 @@ export const NotesApp = mount<{ api?: NotesApi }>((renew, props) => {
     }
 
     dirty.v = false;
+    previewFollowBottom.v = false;
     clearStatus();
 
     if (selected.v) {
@@ -233,12 +434,16 @@ export const NotesApp = mount<{ api?: NotesApi }>((renew, props) => {
     setFormFromDetail(null);
   };
 
-  const saveNote = async () => {
+  const saveNote = async ({ closeAfterSave = false }: { closeAfterSave?: boolean } = {}): Promise<boolean> => {
+    if (!requireWriteAccess()) {
+      return false;
+    }
+
     const title = formTitle.v.trim();
 
     if (!title) {
       errorMessage.v = "title is required";
-      return;
+      return false;
     }
 
     saving.v = true;
@@ -264,11 +469,25 @@ export const NotesApp = mount<{ api?: NotesApi }>((renew, props) => {
 
       dirty.v = false;
       editingId.v = saved._id;
+      selected.v = {
+        _id: saved._id,
+        title,
+        note: formNote.v,
+        category: parseTagString(formTags.v)
+      };
       await loadList();
-      await openNote(saved._id);
+
+      if (closeAfterSave) {
+        await openNote(saved._id);
+      }
+
       statusMessage.v = "Saved.";
+      return true;
     } catch (error) {
-      setFailure(error);
+      handleApiFailure(error, {
+        commandMessage: "Session expired. Login again."
+      });
+      return false;
     } finally {
       saving.v = false;
     }
@@ -276,6 +495,10 @@ export const NotesApp = mount<{ api?: NotesApi }>((renew, props) => {
 
   const deleteSelected = async () => {
     if (!selected.v) {
+      return;
+    }
+
+    if (!requireWriteAccess()) {
       return;
     }
 
@@ -295,13 +518,17 @@ export const NotesApp = mount<{ api?: NotesApi }>((renew, props) => {
       await loadList();
       statusMessage.v = "Deleted.";
     } catch (error) {
-      setFailure(error);
+      handleApiFailure(error);
     } finally {
       deleting.v = false;
     }
   };
 
   const toggleFavorite = async (note: NoteSummary) => {
+    if (!requireWriteAccess()) {
+      return;
+    }
+
     clearStatus();
 
     try {
@@ -316,7 +543,7 @@ export const NotesApp = mount<{ api?: NotesApi }>((renew, props) => {
         selected.v = await api.getNote(note._id);
       }
     } catch (error) {
-      setFailure(error);
+      handleApiFailure(error);
     }
   };
 
@@ -330,8 +557,82 @@ export const NotesApp = mount<{ api?: NotesApi }>((renew, props) => {
     }
   };
 
+  const quitCurrentPane = () => {
+    if (mode.v === "write") {
+      const previousMode = mode.v;
+      cancelEdit();
+      return previousMode !== mode.v;
+    }
+
+    if (mode.v === "view") {
+      mode.v = "list";
+      return true;
+    }
+
+    return false;
+  };
+
+  const runFooterCommand = async () => {
+    const rawCommand = commandInput.v;
+    const resolved = resolveExCommand(rawCommand, {
+      mode: mode.v,
+      hasSelection: Boolean(selected.v)
+    });
+
+    if (!resolved.ok) {
+      setCommandStatus(resolved.message, true);
+      return;
+    }
+
+    const route = resolved.route;
+    commandInput.v = "";
+
+    if (route.kind !== "quit" && !requireWriteAccess("Login first to run write commands.")) {
+      return;
+    }
+
+    if (route.kind === "enter-write") {
+      if (route.source === "selected") {
+        startEdit();
+      } else {
+        startCreate();
+      }
+
+      setCommandStatus(route.message);
+      return;
+    }
+
+    if (route.kind === "quit") {
+      const closed = quitCurrentPane();
+      setCommandStatus(closed ? route.message : "Quit cancelled.", !closed);
+      return;
+    }
+
+    if (route.kind === "save") {
+      const saved = await saveNote({
+        closeAfterSave: false
+      });
+      if (saved) {
+        setCommandStatus(route.message);
+      } else if (!authExpired.v) {
+        setCommandStatus("Save failed.", true);
+      }
+      return;
+    }
+
+    const savedAndClosed = await saveNote({
+      closeAfterSave: true
+    });
+    if (savedAndClosed) {
+      setCommandStatus(route.message);
+    } else if (!authExpired.v) {
+      setCommandStatus("Save failed.", true);
+    }
+  };
+
   mountCallback(() => {
     void loadList();
+    void loadAuthStatus();
 
     const beforeUnloadHandler = (event: BeforeUnloadEvent) => {
       if (!dirty.v) {
@@ -342,7 +643,21 @@ export const NotesApp = mount<{ api?: NotesApi }>((renew, props) => {
       event.returnValue = "";
     };
 
+    const commandShortcutHandler = (event: KeyboardEvent) => {
+      if (event.key !== ":" || event.metaKey || event.ctrlKey || event.altKey) {
+        return;
+      }
+
+      if (isTextInputTarget(event.target)) {
+        return;
+      }
+
+      event.preventDefault();
+      focusCommandInput(":");
+    };
+
     window.addEventListener("beforeunload", beforeUnloadHandler);
+    window.addEventListener("keydown", commandShortcutHandler);
 
     return () => {
       if (syncFrameId) {
@@ -350,6 +665,7 @@ export const NotesApp = mount<{ api?: NotesApi }>((renew, props) => {
         syncFrameId = 0;
       }
       window.removeEventListener("beforeunload", beforeUnloadHandler);
+      window.removeEventListener("keydown", commandShortcutHandler);
     };
   });
 
@@ -357,181 +673,278 @@ export const NotesApp = mount<{ api?: NotesApi }>((renew, props) => {
     const previewBlocks = buildPreviewBlocks(formNote.v);
 
     return (
-      <div className="layout">
-      <aside className="sidebar">
-        <div className="panel-title">
-          <h1>jmemo</h1>
-          <p>lithent refactor</p>
-        </div>
+      <div className="app-shell theme-dark">
+        <div className="layout">
+          <aside className="sidebar">
+            <div className="panel-title">
+              <h1>jmemo</h1>
+              <p>lithent refactor</p>
+            </div>
 
-        <div className="toolbar">
-          <input
-            className="search-input"
-            placeholder="Search title or tag"
-            value={searchText.v}
-            onInput={(event: InputEvent) => {
-              searchText.v = (event.target as HTMLInputElement).value;
-            }}
-            onKeyDown={handleSearchKey}
-          />
-          <button className="button" onClick={runSearch} disabled={listLoading.v}>
-            Search
-          </button>
-          <button className="button primary" onClick={startCreate}>
-            New
-          </button>
-        </div>
+            <div className="toolbar">
+              <input
+                className="search-input"
+                placeholder="Search title or tag"
+                value={searchText.v}
+                onInput={(event: InputEvent) => {
+                  searchText.v = (event.target as HTMLInputElement).value;
+                }}
+                onKeyDown={handleSearchKey}
+              />
+              <button className="button" onClick={runSearch} disabled={listLoading.v}>
+                Search
+              </button>
+              <button className="button primary" onClick={startCreate}>
+                New
+              </button>
+            </div>
 
-        <div className="list-area">
-          {listLoading.v ? <div className="hint">Loading...</div> : null}
-          {!listLoading.v && notes.v.length === 0 ? (
-            <div className="hint">No notes found.</div>
-          ) : null}
-          {!listLoading.v &&
-            notes.v.map((item) => (
-              <div
-                className={`list-item ${selected.v?._id === item._id ? "active" : ""}`}
-                key={item._id}
-              >
-                <button className="list-main" onClick={() => openNote(item._id)}>
-                  <strong>{item.title || "(untitled)"}</strong>
-                  <span className="tags">{item.category.join(", ") || "-"}</span>
-                </button>
-                <button
-                  className={`favorite ${item.favorite ? "on" : ""}`}
-                  onClick={() => toggleFavorite(item)}
-                  title="Toggle favorite"
+            <div className="auth-box">
+              {authLoading.v ? <div className="hint">Checking auth...</div> : null}
+              {!authLoading.v && authEnabled.v && !authenticated.v ? (
+                <form
+                  className="auth-form"
+                  onSubmit={(event: Event) => {
+                    event.preventDefault();
+                    void login();
+                  }}
                 >
-                  {item.favorite ? "★" : "☆"}
-                </button>
-              </div>
-            ))}
-        </div>
-      </aside>
-
-      <main className="content">
-        <header className="content-header">
-          <div>
-            <strong>{mode.v === "write" ? "Write" : "View"}</strong>
-          </div>
-          <div className="header-actions">
-            {mode.v === "view" ? (
-              <button className="button" onClick={startEdit} disabled={!selected.v}>
-                Edit
-              </button>
-            ) : null}
-            {mode.v === "view" ? (
-              <button className="button danger" onClick={deleteSelected} disabled={deleting.v}>
-                Delete
-              </button>
-            ) : null}
-            {mode.v === "write" ? (
-              <button className="button primary" onClick={saveNote} disabled={saving.v}>
-                {saving.v ? "Saving..." : "Save"}
-              </button>
-            ) : null}
-            {mode.v === "write" ? (
-              <button className="button" onClick={cancelEdit}>
-                Cancel
-              </button>
-            ) : null}
-          </div>
-        </header>
-
-        {errorMessage.v ? <div className="banner error">{errorMessage.v}</div> : null}
-        {statusMessage.v ? <div className="banner ok">{statusMessage.v}</div> : null}
-
-        {mode.v === "list" ? (
-          <section className="empty">
-            <p>Select a note from the left list or create a new note.</p>
-          </section>
-        ) : null}
-
-        {mode.v === "view" ? (
-          <section className="viewer">
-            {detailLoading.v ? <div className="hint">Loading note...</div> : null}
-            {!detailLoading.v && selected.v ? (
-              <div>
-                <h2>{selected.v.title}</h2>
-                <p className="meta">Tags: {selected.v.category.join(", ") || "-"}</p>
-                <div className="note-preview" innerHTML={renderMarkdownToHtml(selected.v.note)} />
-              </div>
-            ) : null}
-          </section>
-        ) : null}
-
-          {mode.v === "write" ? (
-            <section className="editor-grid">
-              <div className="editor-panel">
-                <label>
-                  Title
                   <input
                     className="text-input"
-                    value={formTitle.v}
+                    type="password"
+                    placeholder="Password"
+                    value={authPassword.v}
                     onInput={(event: InputEvent) => {
-                      formTitle.v = (event.target as HTMLInputElement).value;
-                      markDirty();
+                      authPassword.v = (event.target as HTMLInputElement).value;
                     }}
                   />
-                </label>
-                <label>
-                  Tags (comma separated)
-                  <input
-                    className="text-input"
-                    value={formTags.v}
-                    onInput={(event: InputEvent) => {
-                      formTags.v = (event.target as HTMLInputElement).value;
-                      markDirty();
-                    }}
-                  />
-                </label>
-                <label>
-                  Note (Monaco + Vim)
-                  <MonacoVimEditor
-                    value={formNote.v}
-                    onChange={(value) => {
-                      formNote.v = value;
-                      markDirty();
-                    }}
-                    onSave={() => {
-                      void saveNote();
-                    }}
-                    onSaveAndClose={async () => {
-                      await saveNote();
-                      mode.v = "view";
-                    }}
-                    onCursorLineChange={handleEditorCursorLineChange}
-                    onImageUpload={async (file) => {
-                      const result = await api.uploadImage(file);
-                      return result.filepath;
-                    }}
-                    onUploadError={setFailure}
-                  />
-                </label>
-              </div>
-              <div className="preview-panel">
-                <h3>Preview (line {editorCursorLine.v})</h3>
-                <div
-                  className="preview-scroll"
-                  ref={previewContainerRef}
-                  onWheel={handlePreviewUserScroll}
-                  onScroll={handlePreviewUserScroll}
-                >
-                  {previewBlocks.map((block) => (
-                    <div
-                      className="preview-block"
-                      key={`${block.start}-${block.end}`}
-                      data-line-start={String(block.start)}
-                      data-line-end={String(block.end)}
-                    >
-                      <div className="note-preview" innerHTML={renderMarkdownToHtml(block.text || " ")} />
-                    </div>
-                  ))}
+                  <button className="button" type="submit">
+                    Login
+                  </button>
+                </form>
+              ) : null}
+              {!authLoading.v && authEnabled.v && authenticated.v ? (
+                <div className="auth-state">
+                  <span className="hint">Authenticated</span>
+                  <button className="button" onClick={logout}>
+                    Logout
+                  </button>
                 </div>
+              ) : null}
+              {!authLoading.v && !authEnabled.v ? (
+                <div className="hint">Auth disabled (set AUTH_PASSWORD to enable).</div>
+              ) : null}
+            </div>
+
+            <div className="list-area">
+              {listLoading.v ? <div className="hint">Loading...</div> : null}
+              {!listLoading.v && notes.v.length === 0 ? (
+                <div className="hint">No notes found.</div>
+              ) : null}
+              {!listLoading.v &&
+                notes.v.map((item) => (
+                  <div
+                    className={`list-item ${selected.v?._id === item._id ? "active" : ""}`}
+                    key={item._id}
+                  >
+                    <button className="list-main" onClick={() => openNote(item._id)}>
+                      <strong>{item.title || "(untitled)"}</strong>
+                      <span className="tags">{item.category.join(", ") || "-"}</span>
+                    </button>
+                    <button
+                      className={`favorite ${item.favorite ? "on" : ""}`}
+                      onClick={() => toggleFavorite(item)}
+                      title="Toggle favorite"
+                    >
+                      {item.favorite ? "★" : "☆"}
+                    </button>
+                  </div>
+                ))}
+            </div>
+          </aside>
+
+          <main className="content">
+            <header className="content-header">
+              <div>
+                <strong>{mode.v === "write" ? "Write" : "View"}</strong>
               </div>
-            </section>
-          ) : null}
-      </main>
+              <div className="header-actions">
+                {mode.v === "view" ? (
+                  <button className="button" onClick={startEdit} disabled={!selected.v}>
+                    Edit
+                  </button>
+                ) : null}
+                {mode.v === "view" ? (
+                  <button className="button danger" onClick={deleteSelected} disabled={deleting.v}>
+                    Delete
+                  </button>
+                ) : null}
+                {mode.v === "write" ? (
+                  <button
+                    className="button primary"
+                    onClick={() => {
+                      void saveNote({
+                        closeAfterSave: false
+                      });
+                    }}
+                    disabled={saving.v}
+                  >
+                    {saving.v ? "Saving..." : "Save"}
+                  </button>
+                ) : null}
+                {mode.v === "write" ? (
+                  <button className="button" onClick={cancelEdit}>
+                    Cancel
+                  </button>
+                ) : null}
+              </div>
+            </header>
+
+            {errorMessage.v ? <div className="banner error">{errorMessage.v}</div> : null}
+            {statusMessage.v ? <div className="banner ok">{statusMessage.v}</div> : null}
+
+            <div className="content-body">
+              {mode.v === "list" ? (
+                <section className="empty">
+                  <p>Select a note from the left list or create a new note.</p>
+                </section>
+              ) : null}
+
+              {mode.v === "view" ? (
+                <section className="viewer">
+                  {detailLoading.v ? <div className="hint">Loading note...</div> : null}
+                  {!detailLoading.v && selected.v ? (
+                    <div>
+                      <h2>{selected.v.title}</h2>
+                      <p className="meta">Tags: {selected.v.category.join(", ") || "-"}</p>
+                      <div className="note-preview" innerHTML={renderMarkdownToHtml(selected.v.note)} />
+                    </div>
+                  ) : null}
+                </section>
+              ) : null}
+
+              {mode.v === "write" ? (
+                <section className="editor-grid">
+                  <div className="editor-panel">
+                    <label>
+                      Title
+                      <input
+                        className="text-input"
+                        value={formTitle.v}
+                        onInput={(event: InputEvent) => {
+                          formTitle.v = (event.target as HTMLInputElement).value;
+                          markDirty();
+                        }}
+                      />
+                    </label>
+                    <label>
+                      Tags (comma separated)
+                      <input
+                        className="text-input"
+                        value={formTags.v}
+                        onInput={(event: InputEvent) => {
+                          formTags.v = (event.target as HTMLInputElement).value;
+                          markDirty();
+                        }}
+                      />
+                    </label>
+                    <label>
+                      Note (Monaco + Vim)
+                      <MonacoVimEditor
+                        value={formNote.v}
+                        onChange={(value) => {
+                          formNote.v = value;
+                          markDirty();
+
+                          if (previewFollowBottom.v && Date.now() >= previewCooldownUntil.v) {
+                            schedulePreviewSync(syncPreviewToBottom);
+                          }
+                        }}
+                        onSave={() => {
+                          void saveNote({
+                            closeAfterSave: false
+                          });
+                        }}
+                        onSaveAndClose={async () => {
+                          await saveNote({
+                            closeAfterSave: true
+                          });
+                        }}
+                        onCursorLineChange={handleEditorCursorLineChange}
+                        onImageUpload={async (file) => {
+                          if (!requireWriteAccess("Login required before uploading images.")) {
+                            throw new Error("Authentication required");
+                          }
+
+                          const result = await api.uploadImage(file);
+                          return result.filepath;
+                        }}
+                        onUploadError={(error) => {
+                          handleApiFailure(error, {
+                            authMessage: "Session expired. Please login and retry image upload."
+                          });
+                        }}
+                      />
+                    </label>
+                  </div>
+                  <div className="preview-panel">
+                    <h3>Preview (line {editorCursorLine.v})</h3>
+                    <div
+                      className="preview-scroll"
+                      ref={previewContainerRef}
+                      onWheel={handlePreviewUserScroll}
+                      onScroll={handlePreviewUserScroll}
+                    >
+                      {previewBlocks.map((block) => (
+                        <div
+                          className="preview-block"
+                          key={`${block.start}-${block.end}`}
+                          data-line-start={String(block.start)}
+                          data-line-end={String(block.end)}
+                        >
+                          <div className="note-preview" innerHTML={renderMarkdownToHtml(block.text || " ")} />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </section>
+              ) : null}
+            </div>
+          </main>
+        </div>
+
+        <footer className="command-footer">
+          <div className={`command-mode mode-${mode.v}`}>{mode.v.toUpperCase()}</div>
+          <form
+            className="command-form"
+            onSubmit={(event: Event) => {
+              event.preventDefault();
+              void runFooterCommand();
+            }}
+          >
+            <input
+              ref={commandInputRef}
+              className="command-input"
+              value={commandInput.v}
+              placeholder=":e  :q  :w  :wq"
+              onInput={(event: InputEvent) => {
+                commandInput.v = (event.target as HTMLInputElement).value;
+              }}
+              onKeyDown={(event: KeyboardEvent) => {
+                if (event.key === "Escape") {
+                  commandInput.v = "";
+                  (event.target as HTMLInputElement).blur();
+                }
+              }}
+            />
+            <button className="button" type="submit">
+              Run
+            </button>
+          </form>
+          <div className={`command-feedback ${commandFeedbackError.v ? "error" : ""}`}>
+            {commandFeedback.v}
+          </div>
+        </footer>
       </div>
     );
   };

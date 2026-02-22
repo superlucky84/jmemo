@@ -225,6 +225,7 @@ export const MonacoVimEditor = mount<MonacoVimEditorProps>((renew, props) => {
         editor = monacoLoaded.editor.create(hostElement, {
           value: String(props.value ?? ""),
           language: "markdown",
+          theme: "vs-dark",
           automaticLayout: true,
           minimap: { enabled: false },
           fontSize: 14,

@@ -21,7 +21,7 @@
 - [x] Phase 7. 통합 테스트 Phase(Phase 간 연동 검증)
 - [ ] Phase 8. 배포 직전 2차 마이그레이션 + 컷오버
 - [ ] Phase 9. 레거시 UX 패리티(분리 스크롤/커맨드 푸터/Tailwind 스타일)
-- [ ] Phase 10. 최소 인증 도입(쓰기/수정 권한 보호)
+- [x] Phase 10. 최소 인증 도입(쓰기/수정 권한 보호)
 
 ## 4. Phase 상세
 
@@ -169,21 +169,22 @@
 
 ### Phase 9. 레거시 UX 패리티(분리 스크롤/커맨드 푸터/Tailwind 스타일)
 #### 구현 체크리스트
-- [ ] 레이아웃 스크롤 구조 분리: `body` 단일 스크롤 제거, 좌측 목록/우측 패널 독립 스크롤로 전환
-- [ ] 데스크톱 레이아웃 2단 고정: View/Write 모두 `좌측 목록 + 우측 작업영역` 구조 유지(가로 3단 분할 금지)
-- [ ] Write 모드 우측 작업영역 구성 고정: 에디터/프리뷰는 `상하 분할` 또는 `탭 전환`으로 처리해 가로 폭 축소 방지
-- [ ] 좌측 목록 커스텀 스크롤 UI 적용(레거시와 유사한 폭/색/hover 반응)
-- [ ] 우측 뷰어/에디터 커스텀 스크롤 UI 적용(패널별 일관 스타일)
-- [ ] 하단 고정 커맨드 푸터 추가(`position: sticky` 또는 `fixed`, `bottom: 0`) 및 모든 모드에서 가시성 유지
-- [ ] 글로벌 커맨드 푸터 명령창 추가: View/List/Write 전 모드에서 `:` 입력 가능, 현재 모드 상태 배지 표시
-- [ ] 공용 Ex 명령 디스패처 도입: `:e`, `:q`, `:w`, `:wq`를 단일 파서/핸들러에서 라우팅
-- [ ] 키 라우팅 우선순위 확정: 에디터 포커스 시 monaco-vim 우선, 비포커스/뷰어 모드 시 푸터 명령창 우선
-- [ ] View 모드 Vim Ex 명령 지원: `:e`(즉시 편집 진입), `:q`(목록 복귀/패널 닫기 정책 준수)
-- [ ] Write 모드 기존 `:w`, `:wq`와 푸터 커맨드 입력 상태 연동
-- [ ] Write 모드 Preview 하단 추적 모드 추가: 커서가 문서 끝 근처에서 연속 입력 시 Preview도 자동 하단 고정
-- [ ] Preview 하단 추적 해제/복귀 규칙 확정: 수동 스크롤 시 해제, 커서가 다시 문서 끝으로 오면 재활성화
+- [x] 레이아웃 스크롤 구조 분리: `body` 단일 스크롤 제거, 좌측 목록/우측 패널 독립 스크롤로 전환
+- [x] 데스크톱 레이아웃 2단 고정: View/Write 모두 `좌측 목록 + 우측 작업영역` 구조 유지(가로 3단 분할 금지)
+- [x] Write 모드 우측 작업영역 구성 고정: 에디터/프리뷰는 `상하 분할` 또는 `탭 전환`으로 처리해 가로 폭 축소 방지
+- [x] 좌측 목록 커스텀 스크롤 UI 적용(레거시와 유사한 폭/색/hover 반응)
+- [x] 우측 뷰어/에디터 커스텀 스크롤 UI 적용(패널별 일관 스타일)
+- [x] 하단 고정 커맨드 푸터 추가(`position: sticky` 또는 `fixed`, `bottom: 0`) 및 모든 모드에서 가시성 유지
+- [x] 글로벌 커맨드 푸터 명령창 추가: View/List/Write 전 모드에서 `:` 입력 가능, 현재 모드 상태 배지 표시
+- [x] 공용 Ex 명령 디스패처 도입: `:e`, `:q`, `:w`, `:wq`를 단일 파서/핸들러에서 라우팅
+- [x] 키 라우팅 우선순위 확정: 에디터 포커스 시 monaco-vim 우선, 비포커스/뷰어 모드 시 푸터 명령창 우선
+- [x] View 모드 Vim Ex 명령 지원: `:e`(즉시 편집 진입), `:q`(목록 복귀/패널 닫기 정책 준수)
+- [x] Write 모드 기존 `:w`, `:wq`와 푸터 커맨드 입력 상태 연동
+- [x] Write 모드 Preview 하단 추적 모드 추가: 커서가 문서 끝 근처에서 연속 입력 시 Preview도 자동 하단 고정
+- [x] Preview 하단 추적 해제/복귀 규칙 확정: 수동 스크롤 시 해제, 커서가 다시 문서 끝으로 오면 재활성화
+- [x] Tailwind 도구체인 스캐폴딩 반영(`tailwindcss`, `@tailwindcss/postcss`, `postcss.config.cjs`, `tailwind.config.js`)
 - [ ] Tailwind CSS 도입(`tailwindcss`, `postcss`, `autoprefixer`) 및 기존 주요 화면 스타일 이관
-- [ ] 전체 UI 다크모드 기본 테마 적용(라이트 우선이 아닌 다크 우선; 배경/텍스트/경계/포커스 컬러 토큰 재정의)
+- [x] 전체 UI 다크모드 기본 테마 적용(라이트 우선이 아닌 다크 우선; 배경/텍스트/경계/포커스 컬러 토큰 재정의)
 - [ ] Monaco/Preview/리스트/푸터 포함 전 영역 다크 테마 일관성 확보(컴포넌트별 톤 불일치 제거)
 - [ ] 마크다운 뷰어 타이포그래피 재정비(헤더/코드블록/인용/리스트를 레거시 품질 이상으로 개선)
 - [ ] 모바일/좁은 해상도에서 분리 스크롤 + 고정 푸터 동작 점검
@@ -192,12 +193,12 @@
 - [ ] UI 테스트: 좌/우 패널 스크롤 독립 동작 검증(`scrollTop` 상호 비간섭)
 - [ ] UI 테스트: Write 모드에서도 데스크톱 기준 2단 레이아웃 유지 검증(가로 3단 분할 미발생)
 - [ ] UI 테스트: 커맨드 푸터 항상 하단 고정 렌더링 검증(모드 전환 포함)
-- [ ] UI 테스트: View/List 모드에서 `:` 입력 시 푸터 명령창 활성화 및 `:e` 실행으로 Write 진입 검증
-- [ ] 유닛 테스트: 공용 Ex 명령 디스패처(`:e/:q/:w/:wq`) 파싱/라우팅 검증
+- [x] UI 테스트: View/List 모드에서 `:` 입력 시 푸터 명령창 활성화 및 `:e` 실행으로 Write 진입 검증
+- [x] 유닛 테스트: 공용 Ex 명령 디스패처(`:e/:q/:w/:wq`) 파싱/라우팅 검증
 - [ ] 유닛 테스트: 에디터 포커스 여부에 따른 키 라우팅 우선순위 검증
-- [ ] 명령 테스트: View 모드 `:e`, `:q` 파싱/라우팅 유닛 테스트 추가
-- [ ] 회귀 테스트: Write 모드 `:w`, `:wq` 동작 유지 확인
-- [ ] UI 테스트: 문서 하단 연속 입력 시 Preview 하단 자동 추적 동작 검증(수동 스크롤 해제 포함)
+- [x] 명령 테스트: View 모드 `:e`, `:q` 파싱/라우팅 유닛 테스트 추가
+- [x] 회귀 테스트: Write 모드 `:w`, `:wq` 동작 유지 확인
+- [x] UI 테스트: 문서 하단 연속 입력 시 Preview 하단 자동 추적 동작 검증(수동 스크롤 해제 포함)
 - [ ] 스모크 테스트: Tailwind 클래스 기반 레이아웃/뷰어 스타일 핵심 요소 렌더 확인
 - [ ] 스모크 테스트: 다크모드 테마 클래스/토큰 적용 및 주요 화면 대비(가독성) 검증
 
@@ -210,27 +211,27 @@
 
 ### Phase 10. 최소 인증 도입(쓰기/수정 권한 보호)
 #### 구현 체크리스트
-- [ ] 인증 정책 고정: `읽기(목록/상세)`는 익명 허용, `쓰기/수정/삭제/업로드`는 인증 필수
-- [ ] 단일 사용자용 간단 로그인 구현(비밀번호 기반) + 환경변수 키 확정(`AUTH_PASSWORD` 또는 동등 키)
-- [ ] 인증 세션 저장 방식 확정(권장: `httpOnly` 쿠키 기반 세션 토큰)
-- [ ] 인증 API 추가: `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`
-- [ ] `/jnote/create|update|delete|upload`에 인증 미들웨어 적용(미인증 시 `401`)
-- [ ] 프런트 로그인 UI 추가(최소 입력 폼 + 로그인 상태 표시 + 로그아웃 버튼)
-- [ ] 미인증 상태에서 `New/Edit/Save/Delete/Upload` 및 Vim `:w/:wq/:e` 실행 시 인증 유도 UX 적용
-- [ ] 인증 실패/세션 만료 UX 확정(현재 편집 버퍼 보존 + 재로그인 후 재시도)
-- [ ] `.env.example`/문서에 인증 관련 설정값 및 운영 주의사항 반영
+- [x] 인증 정책 고정: `읽기(목록/상세)`는 익명 허용, `쓰기/수정/삭제/업로드`는 인증 필수
+- [x] 단일 사용자용 간단 로그인 구현(비밀번호 기반) + 환경변수 키 확정(`AUTH_PASSWORD` 또는 동등 키)
+- [x] 인증 세션 저장 방식 확정(권장: `httpOnly` 쿠키 기반 세션 토큰)
+- [x] 인증 API 추가: `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`
+- [x] `/jnote/create|update|delete|upload`에 인증 미들웨어 적용(미인증 시 `401`)
+- [x] 프런트 로그인 UI 추가(최소 입력 폼 + 로그인 상태 표시 + 로그아웃 버튼)
+- [x] 미인증 상태에서 `New/Edit/Save/Delete/Upload` 및 Vim `:w/:wq/:e` 실행 시 인증 유도 UX 적용
+- [x] 인증 실패/세션 만료 UX 확정(현재 편집 버퍼 보존 + 재로그인 후 재시도)
+- [x] `.env.example`/문서에 인증 관련 설정값 및 운영 주의사항 반영
 
 #### 기본 테스트 코드
-- [ ] API 테스트: 미인증 쓰기 요청 `401` 응답 검증
-- [ ] API 테스트: 로그인 성공 후 쓰기 요청 허용 검증
-- [ ] API 테스트: 잘못된 비밀번호/만료 세션/로그아웃 후 재요청 검증
-- [ ] UI 테스트: 미인증 상태에서 수정 진입 차단 및 로그인 유도 검증
-- [ ] UI 테스트: 로그인 후 `:w/:wq` 및 저장/삭제 버튼 정상 동작 검증
+- [x] API 테스트: 미인증 쓰기 요청 `401` 응답 검증
+- [x] API 테스트: 로그인 성공 후 쓰기 요청 허용 검증
+- [x] API 테스트: 잘못된 비밀번호/만료 세션/로그아웃 후 재요청 검증
+- [x] UI 테스트: 미인증 상태에서 수정 진입 차단 및 로그인 유도 검증
+- [x] UI 테스트: 로그인 후 `:w/:wq` 및 저장/삭제 버튼 정상 동작 검증
 
 #### 완료 기준
-- [ ] 미인증 사용자는 읽기만 가능하고, 데이터 변경 동작은 모두 인증 후에만 수행됨
-- [ ] 로그인/로그아웃/세션만료 경로에서 데이터 유실 없이 UX가 일관 동작
-- [ ] 기존 핵심 기능 회귀 없이 테스트 통과
+- [x] 미인증 사용자는 읽기만 가능하고, 데이터 변경 동작은 모두 인증 후에만 수행됨
+- [x] 로그인/로그아웃/세션만료 경로에서 데이터 유실 없이 UX가 일관 동작
+- [x] 기존 핵심 기능 회귀 없이 테스트 통과
 
 ## 5. 중단/재개 체크리스트
 - [x] 마지막 완료 체크박스 위치를 이 문서에 반영
@@ -257,3 +258,9 @@
 - [x] `2026-02-21 18:44 UTC | Phase-8 rehearsal | done: cutover pipeline dry-run success with local .env archive | next: execute real cutover with --yes on production network | commit: (working tree, not committed yet)`
 - [x] `2026-02-21 18:56 UTC | backlog update | done: added Phase-9 checklist for split-scroll, command footer, view-mode :e/:q, tailwind restyle | next: implement Phase-9 items in small PR units | commit: (working tree, not committed yet)`
 - [x] `2026-02-21 19:02 UTC | backlog update | done: added Phase-10 checklist for legacy-like simple auth (write-protected mode) | next: finalize auth policy/session mechanism before implementation | commit: (working tree, not committed yet)`
+- [x] `2026-02-22 06:30 UTC | Phase-9(partial) | done: 2-column fixed shell + split scroll + global command footer + Ex dispatcher(:e/:q/:w/:wq) + unit/smoke tests | next: preview bottom-follow + dark mode/tailwind migration + auth phase start | commit: (working tree, not committed yet)`
+- [x] `2026-02-22 06:34 UTC | Phase-9(partial) | done: preview bottom-follow(sync-to-end) + manual-scroll cooldown release + smoke test coverage | next: dark mode baseline + tailwind migration scaffolding | commit: (working tree, not committed yet)`
+- [x] `2026-02-22 06:38 UTC | Phase-9(partial) | done: dark-mode baseline theme(shell/panels/inputs/footer + monaco vs-dark) + render smoke assertions | next: tailwind migration plan + color/contrast tuning pass | commit: (working tree, not committed yet)`
+- [x] `2026-02-22 06:40 UTC | Phase-9(partial) | done: tailwind toolchain scaffolding(deps + postcss + config + css import) | next: replace legacy CSS blocks with tailwind utility/components incrementally | commit: (working tree, not committed yet)`
+- [x] `2026-02-22 06:48 UTC | Phase-10(partial) | done: auth service(app/routes/env) + read-only anon policy + write-route middleware + auth UI + API/unit tests | next: session-expiry UX + authenticated :w/:wq/save/delete UI regression coverage | commit: (working tree, not committed yet)`
+- [x] `2026-02-22 06:49 UTC | Phase-10 complete | done: 401 session-expiry handling(draft preserve + re-login retry) + :w stays write / :wq closes + auth UI/API regression tests | next: close remaining Phase-9 style/test parity items | commit: (working tree, not committed yet)`

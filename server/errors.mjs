@@ -6,6 +6,7 @@ const ERROR_REGISTRY = {
   MISSING_REQUIRED_FIELD: { status: 400, retryable: false },
   NOTE_NOT_FOUND: { status: 404, retryable: false },
   CONFLICT: { status: 409, retryable: false },
+  UNAUTHORIZED: { status: 401, retryable: false },
   FILE_TOO_LARGE: { status: 413, retryable: false },
   UNSUPPORTED_MEDIA_TYPE: { status: 415, retryable: false },
   INTERNAL_ERROR: { status: 500, retryable: false },
