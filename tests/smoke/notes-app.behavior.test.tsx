@@ -569,6 +569,25 @@ describe("NotesApp behavior", () => {
     );
   });
 
+  it("shows auth-disabled warning banner even in write mode", async () => {
+    const app = <NotesApp api={createBaseApi()} />;
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    activeUnmounts.push(render(app, container));
+    await flushMicrotasks();
+
+    expect(container.querySelector(".banner.warn")?.textContent).toContain("Auth disabled");
+
+    const newButton = [...container.querySelectorAll(".button")].find(
+      (element) => element.textContent?.trim() === "New"
+    ) as HTMLButtonElement;
+    newButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await flushMicrotasks();
+
+    expect(container.querySelector(".editor-grid")).not.toBeNull();
+    expect(container.querySelector(".banner.warn")?.textContent).toContain("Auth disabled");
+  });
+
   it("allows :w save after login and keeps write mode", async () => {
     const createNote = vi.fn(async () => ({
       _id: "000000000000000000000001",

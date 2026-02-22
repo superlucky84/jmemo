@@ -853,6 +853,9 @@ export const NotesApp = mount<{ api?: NotesApi }>((renew, props) => {
 
             {errorMessage.v ? <div className="banner error">{errorMessage.v}</div> : null}
             {statusMessage.v ? <div className="banner ok">{statusMessage.v}</div> : null}
+            {!authLoading.v && !authEnabled.v ? (
+              <div className="banner warn">Auth disabled. Set AUTH_PASSWORD to protect write operations.</div>
+            ) : null}
             {mode.v === "write" && !authLoading.v && authEnabled.v && !authenticated.v ? (
               <div className="auth-inline rounded-xl">
                 <form
