@@ -72,6 +72,7 @@ export const NotesApp = mount<{ api?: NotesApi }>((renew, props) => {
   const formNote = state("", renew);
   const dirty = state(false, renew);
   const editorCursorLine = state(1, renew);
+  const editorFocusSignal = state(0, renew);
 
   const previewContainerRef = ref<HTMLElement | null>(null);
   const commandInputRef = ref<HTMLInputElement | null>(null);
@@ -148,6 +149,43 @@ export const NotesApp = mount<{ api?: NotesApi }>((renew, props) => {
       const cursor = input.value.length;
       input.setSelectionRange(cursor, cursor);
     });
+  };
+
+  const focusEditorElement = () => {
+    if (typeof document === "undefined") {
+      return false;
+    }
+
+    const monacoInput =
+      (document.querySelector(".monaco-editor textarea.inputarea") as HTMLTextAreaElement | null) ??
+      (document.querySelector(".monaco-editor textarea") as HTMLTextAreaElement | null);
+    if (monacoInput) {
+      monacoInput.focus();
+      return true;
+    }
+
+    const fallbackInput = document.querySelector(".note-input:not(.hidden)") as HTMLTextAreaElement | null;
+    if (fallbackInput) {
+      fallbackInput.focus();
+      return true;
+    }
+
+    return false;
+  };
+
+  const focusEditorWithRetry = (attempts = 6) => {
+    if (focusEditorElement() || attempts <= 0) {
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      focusEditorWithRetry(attempts - 1);
+    });
+  };
+
+  const requestEditorFocus = () => {
+    editorFocusSignal.v += 1;
+    focusEditorWithRetry();
   };
 
   const markDirty = () => {
@@ -384,7 +422,7 @@ export const NotesApp = mount<{ api?: NotesApi }>((renew, props) => {
     }
   };
 
-  const startCreate = () => {
+  const startCreate = ({ focusEditor = true }: { focusEditor?: boolean } = {}) => {
     if (!requireWriteAccess()) {
       return;
     }
@@ -396,9 +434,13 @@ export const NotesApp = mount<{ api?: NotesApi }>((renew, props) => {
     setFormFromDetail(null);
     dirty.v = false;
     clearStatus();
+
+    if (focusEditor) {
+      requestEditorFocus();
+    }
   };
 
-  const startEdit = () => {
+  const startEdit = ({ focusEditor = true }: { focusEditor?: boolean } = {}) => {
     if (!selected.v) {
       return;
     }
@@ -413,6 +455,10 @@ export const NotesApp = mount<{ api?: NotesApi }>((renew, props) => {
     setFormFromDetail(selected.v);
     dirty.v = false;
     clearStatus();
+
+    if (focusEditor) {
+      requestEditorFocus();
+    }
   };
 
   const cancelEdit = () => {
@@ -592,6 +638,7 @@ export const NotesApp = mount<{ api?: NotesApi }>((renew, props) => {
     }
 
     if (route.kind === "enter-write") {
+      commandInputRef.value?.blur();
       if (route.source === "selected") {
         startEdit();
       } else {
@@ -614,6 +661,7 @@ export const NotesApp = mount<{ api?: NotesApi }>((renew, props) => {
       });
       if (saved) {
         setCommandStatus(route.message);
+        requestEditorFocus();
       } else if (!authExpired.v) {
         setCommandStatus("Save failed.", true);
       }
@@ -673,16 +721,16 @@ export const NotesApp = mount<{ api?: NotesApi }>((renew, props) => {
     const previewBlocks = buildPreviewBlocks(formNote.v);
 
     return (
-      <div className="app-shell theme-dark">
-        <div className={`layout ${mode.v === "write" ? "layout-write" : ""}`}>
+      <div className="app-shell theme-dark min-h-screen flex flex-col">
+        <div className={`layout grid flex-1 min-h-0 ${mode.v === "write" ? "layout-write" : ""}`}>
           {mode.v !== "write" ? (
-            <aside className="sidebar">
+            <aside className="sidebar flex min-h-0 flex-col gap-3 p-4">
             <div className="panel-title">
               <h1>jmemo</h1>
               <p>lithent refactor</p>
             </div>
 
-            <div className="toolbar">
+            <div className="toolbar grid gap-2">
               <input
                 className="search-input"
                 placeholder="Search title or tag"
@@ -700,7 +748,7 @@ export const NotesApp = mount<{ api?: NotesApi }>((renew, props) => {
               </button>
             </div>
 
-            <div className="auth-box">
+            <div className="auth-box rounded-xl">
               {authLoading.v ? <div className="hint">Checking auth...</div> : null}
               {!authLoading.v && authEnabled.v && !authenticated.v ? (
                 <form
@@ -737,7 +785,7 @@ export const NotesApp = mount<{ api?: NotesApi }>((renew, props) => {
               ) : null}
             </div>
 
-            <div className="list-area">
+            <div className="list-area flex min-h-0 flex-1 flex-col gap-2 overflow-auto pr-1">
               {listLoading.v ? <div className="hint">Loading...</div> : null}
               {!listLoading.v && notes.v.length === 0 ? (
                 <div className="hint">No notes found.</div>
@@ -765,12 +813,12 @@ export const NotesApp = mount<{ api?: NotesApi }>((renew, props) => {
             </aside>
           ) : null}
 
-          <main className={`content ${mode.v === "write" ? "content-write" : ""}`}>
-            <header className="content-header">
+          <main className={`content flex min-h-0 flex-col ${mode.v === "write" ? "content-write" : ""}`}>
+            <header className="content-header flex items-center justify-between">
               <div>
                 <strong>{mode.v === "write" ? "Write" : "View"}</strong>
               </div>
-              <div className="header-actions">
+              <div className="header-actions flex gap-2">
                 {mode.v === "view" ? (
                   <button className="button" onClick={startEdit} disabled={!selected.v}>
                     Edit
@@ -805,7 +853,7 @@ export const NotesApp = mount<{ api?: NotesApi }>((renew, props) => {
             {errorMessage.v ? <div className="banner error">{errorMessage.v}</div> : null}
             {statusMessage.v ? <div className="banner ok">{statusMessage.v}</div> : null}
             {mode.v === "write" && !authLoading.v && authEnabled.v && !authenticated.v ? (
-              <div className="auth-inline">
+              <div className="auth-inline rounded-xl">
                 <form
                   className="auth-form"
                   onSubmit={(event: Event) => {
@@ -829,7 +877,7 @@ export const NotesApp = mount<{ api?: NotesApi }>((renew, props) => {
               </div>
             ) : null}
 
-            <div className="content-body">
+            <div className="content-body flex min-h-0 flex-1 flex-col gap-3 overflow-auto pr-1">
               {mode.v === "list" ? (
                 <section className="empty">
                   <p>Select a note from the left list or create a new note.</p>
@@ -837,7 +885,7 @@ export const NotesApp = mount<{ api?: NotesApi }>((renew, props) => {
               ) : null}
 
               {mode.v === "view" ? (
-                <section className="viewer">
+                <section className="viewer rounded-xl">
                   {detailLoading.v ? <div className="hint">Loading note...</div> : null}
                   {!detailLoading.v && selected.v ? (
                     <div>
@@ -850,8 +898,8 @@ export const NotesApp = mount<{ api?: NotesApi }>((renew, props) => {
               ) : null}
 
               {mode.v === "write" ? (
-                <section className="editor-grid">
-                  <div className="editor-panel">
+                <section className="editor-grid grid">
+                  <div className="editor-panel rounded-xl">
                     <label>
                       Title
                       <input
@@ -878,6 +926,7 @@ export const NotesApp = mount<{ api?: NotesApi }>((renew, props) => {
                       Note (Monaco + Vim)
                       <MonacoVimEditor
                         value={formNote.v}
+                        focusSignal={editorFocusSignal.v}
                         onChange={(value) => {
                           formNote.v = value;
                           markDirty();
@@ -896,6 +945,10 @@ export const NotesApp = mount<{ api?: NotesApi }>((renew, props) => {
                             closeAfterSave: true
                           });
                         }}
+                        onQuit={() => {
+                          const closed = quitCurrentPane();
+                          setCommandStatus(closed ? "Quit pane." : "Quit cancelled.", !closed);
+                        }}
                         onCursorLineChange={handleEditorCursorLineChange}
                         onImageUpload={async (file) => {
                           if (!requireWriteAccess("Login required before uploading images.")) {
@@ -913,7 +966,7 @@ export const NotesApp = mount<{ api?: NotesApi }>((renew, props) => {
                       />
                     </label>
                   </div>
-                  <div className="preview-panel">
+                  <div className="preview-panel rounded-xl">
                     <h3>Preview (line {editorCursorLine.v})</h3>
                     <div
                       className="preview-scroll"
@@ -939,10 +992,10 @@ export const NotesApp = mount<{ api?: NotesApi }>((renew, props) => {
           </main>
         </div>
 
-        <footer className="command-footer">
+        <footer className="command-footer sticky bottom-0 z-20">
           <div className={`command-mode mode-${mode.v}`}>{mode.v.toUpperCase()}</div>
           <form
-            className="command-form"
+            className="command-form flex items-center gap-2"
             onSubmit={(event: Event) => {
               event.preventDefault();
               void runFooterCommand();

@@ -170,8 +170,8 @@
 ### Phase 9. 레거시 UX 패리티(분리 스크롤/커맨드 푸터/Tailwind 스타일)
 #### 구현 체크리스트
 - [x] 레이아웃 스크롤 구조 분리: `body` 단일 스크롤 제거, 좌측 목록/우측 패널 독립 스크롤로 전환
-- [x] 데스크톱 레이아웃 2단 고정: View/Write 모두 `좌측 목록 + 우측 작업영역` 구조 유지(가로 3단 분할 금지)
-- [x] Write 모드 우측 작업영역 구성 고정: 에디터/프리뷰는 `상하 분할` 또는 `탭 전환`으로 처리해 가로 폭 축소 방지
+- [x] 데스크톱 레이아웃 2단 고정: List/View는 `좌측 목록 + 우측 작업영역`, Write는 `에디터 + Preview` 2단으로 유지(가로 3단 분할 금지)
+- [x] Write 모드 작업영역 구성 고정: 좌측 목록 숨김 + 에디터/프리뷰 `좌우 분할`로 편집 폭/가독성 유지
 - [x] 좌측 목록 커스텀 스크롤 UI 적용(레거시와 유사한 폭/색/hover 반응)
 - [x] 우측 뷰어/에디터 커스텀 스크롤 UI 적용(패널별 일관 스타일)
 - [x] 하단 고정 커맨드 푸터 추가(`position: sticky` 또는 `fixed`, `bottom: 0`) 및 모든 모드에서 가시성 유지
@@ -183,31 +183,31 @@
 - [x] Write 모드 Preview 하단 추적 모드 추가: 커서가 문서 끝 근처에서 연속 입력 시 Preview도 자동 하단 고정
 - [x] Preview 하단 추적 해제/복귀 규칙 확정: 수동 스크롤 시 해제, 커서가 다시 문서 끝으로 오면 재활성화
 - [x] Tailwind 도구체인 스캐폴딩 반영(`tailwindcss`, `@tailwindcss/postcss`, `postcss.config.cjs`, `tailwind.config.js`)
-- [ ] Tailwind CSS 도입(`tailwindcss`, `postcss`, `autoprefixer`) 및 기존 주요 화면 스타일 이관
+- [x] Tailwind CSS 도입(`tailwindcss`, `postcss`, `autoprefixer`) 및 기존 주요 화면 스타일 이관
 - [x] 전체 UI 다크모드 기본 테마 적용(라이트 우선이 아닌 다크 우선; 배경/텍스트/경계/포커스 컬러 토큰 재정의)
-- [ ] Monaco/Preview/리스트/푸터 포함 전 영역 다크 테마 일관성 확보(컴포넌트별 톤 불일치 제거)
-- [ ] 마크다운 뷰어 타이포그래피 재정비(헤더/코드블록/인용/리스트를 레거시 품질 이상으로 개선)
+- [x] Monaco/Preview/리스트/푸터 포함 전 영역 다크 테마 일관성 확보(컴포넌트별 톤 불일치 제거)
+- [x] 마크다운 뷰어 타이포그래피 재정비(헤더/코드블록/인용/리스트를 레거시 품질 이상으로 개선)
 - [ ] 모바일/좁은 해상도에서 분리 스크롤 + 고정 푸터 동작 점검
 
 #### 기본 테스트 코드
-- [ ] UI 테스트: 좌/우 패널 스크롤 독립 동작 검증(`scrollTop` 상호 비간섭)
-- [ ] UI 테스트: Write 모드에서도 데스크톱 기준 2단 레이아웃 유지 검증(가로 3단 분할 미발생)
-- [ ] UI 테스트: 커맨드 푸터 항상 하단 고정 렌더링 검증(모드 전환 포함)
+- [x] UI 테스트: 좌/우 패널 스크롤 독립 동작 검증(`scrollTop` 상호 비간섭)
+- [x] UI 테스트: Write 모드에서도 데스크톱 기준 2단 레이아웃 유지 검증(가로 3단 분할 미발생)
+- [x] UI 테스트: 커맨드 푸터 항상 하단 고정 렌더링 검증(모드 전환 포함)
 - [x] UI 테스트: View/List 모드에서 `:` 입력 시 푸터 명령창 활성화 및 `:e` 실행으로 Write 진입 검증
 - [x] 유닛 테스트: 공용 Ex 명령 디스패처(`:e/:q/:w/:wq`) 파싱/라우팅 검증
-- [ ] 유닛 테스트: 에디터 포커스 여부에 따른 키 라우팅 우선순위 검증
+- [x] 유닛 테스트: 에디터 포커스 여부에 따른 키 라우팅 우선순위 검증
 - [x] 명령 테스트: View 모드 `:e`, `:q` 파싱/라우팅 유닛 테스트 추가
 - [x] 회귀 테스트: Write 모드 `:w`, `:wq` 동작 유지 확인
 - [x] UI 테스트: 문서 하단 연속 입력 시 Preview 하단 자동 추적 동작 검증(수동 스크롤 해제 포함)
-- [ ] 스모크 테스트: Tailwind 클래스 기반 레이아웃/뷰어 스타일 핵심 요소 렌더 확인
-- [ ] 스모크 테스트: 다크모드 테마 클래스/토큰 적용 및 주요 화면 대비(가독성) 검증
+- [x] 스모크 테스트: Tailwind 클래스 기반 레이아웃/뷰어 스타일 핵심 요소 렌더 확인
+- [x] 스모크 테스트: 다크모드 테마 클래스/토큰 적용 및 주요 화면 대비(가독성) 검증
 
 #### 완료 기준
-- [ ] 레거시 대비 UX 불편 포인트(통합 스크롤, 푸터 부재, View 모드 Ex 명령 미지원)가 모두 해소됨
-- [ ] View/Write 공통으로 데스크톱 2단 레이아웃이 유지되어 가독성/입력 폭 저하가 없음
+- [x] 레거시 대비 UX 불편 포인트(통합 스크롤, 푸터 부재, View 모드 Ex 명령 미지원)가 모두 해소됨
+- [x] View/Write 공통으로 데스크톱 2단 레이아웃이 유지되어 가독성/입력 폭 저하가 없음
 - [ ] 분리 스크롤 + 하단 커맨드 푸터 + Ex 명령 세트(`:e/:q/:w/:wq`)가 수동 테스트에서 일관 동작
-- [ ] 전체 기본 테마가 다크모드로 적용되고, 본문/코드/링크/상태 메시지의 대비가 사용 가능한 수준으로 유지됨
-- [ ] Tailwind 전환 후에도 기존 기능 회귀 없이 테스트 통과
+- [x] 전체 기본 테마가 다크모드로 적용되고, 본문/코드/링크/상태 메시지의 대비가 사용 가능한 수준으로 유지됨
+- [x] Tailwind 전환 후에도 기존 기능 회귀 없이 테스트 통과
 
 ### Phase 10. 최소 인증 도입(쓰기/수정 권한 보호)
 #### 구현 체크리스트
@@ -264,3 +264,6 @@
 - [x] `2026-02-22 06:40 UTC | Phase-9(partial) | done: tailwind toolchain scaffolding(deps + postcss + config + css import) | next: replace legacy CSS blocks with tailwind utility/components incrementally | commit: (working tree, not committed yet)`
 - [x] `2026-02-22 06:48 UTC | Phase-10(partial) | done: auth service(app/routes/env) + read-only anon policy + write-route middleware + auth UI + API/unit tests | next: session-expiry UX + authenticated :w/:wq/save/delete UI regression coverage | commit: (working tree, not committed yet)`
 - [x] `2026-02-22 06:49 UTC | Phase-10 complete | done: 401 session-expiry handling(draft preserve + re-login retry) + :w stays write / :wq closes + auth UI/API regression tests | next: close remaining Phase-9 style/test parity items | commit: (working tree, not committed yet)`
+- [x] `2026-02-22 06:59 UTC | Phase-9(partial) | done: write-mode layout switch(sidebar hidden + editor/preview split) + sticky footer utility classes + scroll/layout/footer/key-routing smoke tests | next: finish visual parity(tailwind migration, markdown typography, dark-tone tuning) | commit: (working tree, not committed yet)`
+- [x] `2026-02-22 07:01 UTC | Phase-9(partial) | done: markdown typography polish + dark theme color consistency tuning + tailwind utility class migration + full test/build pass | next: mobile/narrow-width behavior verification and manual parity sweep | commit: (working tree, not committed yet)`
+- [x] `2026-02-22 07:02 UTC | docs/manual-checklist update | done: added layout/footer/responsive manual test cases for Phase-9 closure | next: execute manual narrow-width validation and record PASS/FAIL evidence | commit: (working tree, not committed yet)`

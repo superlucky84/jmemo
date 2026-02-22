@@ -271,7 +271,9 @@ body {
 
 .note-preview {
   margin-top: 12px;
-  line-height: 1.6;
+  line-height: 1.72;
+  letter-spacing: 0.01em;
+  font-size: 14px;
   background: #f7f9fc;
   border: 1px solid #dde3ee;
   border-radius: 10px;
@@ -293,29 +295,35 @@ body {
 .note-preview h4,
 .note-preview h5,
 .note-preview h6 {
-  margin: 12px 0 8px;
+  margin: 14px 0 8px;
   line-height: 1.25;
+  font-weight: 700;
+  letter-spacing: 0.01em;
 }
 
 .note-preview h1 {
-  font-size: 28px;
+  font-size: 30px;
+  border-bottom: 1px solid #d7deeb;
+  padding-bottom: 6px;
 }
 
 .note-preview h2 {
-  font-size: 22px;
+  font-size: 24px;
+  border-bottom: 1px solid #e3e9f2;
+  padding-bottom: 4px;
 }
 
 .note-preview h3 {
-  font-size: 18px;
+  font-size: 20px;
 }
 
 .note-preview p {
-  margin: 8px 0;
+  margin: 10px 0;
 }
 
 .note-preview ul,
 .note-preview ol {
-  margin: 8px 0;
+  margin: 10px 0;
   padding-left: 22px;
 }
 
@@ -325,9 +333,12 @@ body {
 
 .note-preview blockquote {
   margin: 10px 0;
+  padding: 8px 12px;
+  background: #eef3fb;
   padding-left: 12px;
   border-left: 3px solid #b9c8e6;
   color: #4e5b71;
+  border-radius: 6px;
 }
 
 .note-preview pre {
@@ -335,6 +346,7 @@ body {
   padding: 10px 12px;
   background: #202733;
   color: #eef3fc;
+  border: 1px solid #2f405f;
   border-radius: 8px;
   overflow: auto;
 }
@@ -342,9 +354,10 @@ body {
 .note-preview code {
   font-family: "D2Coding", "Menlo", "Consolas", monospace;
   font-size: 0.92em;
-  background: #e9eef8;
+  background: #e6edf9;
   border-radius: 4px;
-  padding: 1px 4px;
+  padding: 2px 5px;
+  color: #1b3d7a;
 }
 
 .note-preview pre code {
@@ -365,12 +378,41 @@ body {
 .note-preview img {
   max-width: 100%;
   border-radius: 8px;
+  border: 1px solid #d5deed;
+  box-shadow: 0 4px 12px rgba(15, 23, 40, 0.12);
 }
 
 .note-preview hr {
   margin: 12px 0;
   border: 0;
   border-top: 1px solid #d7deeb;
+}
+
+.note-preview table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 10px 0;
+  border: 1px solid #d7deeb;
+}
+
+.note-preview thead tr {
+  background: #edf3ff;
+}
+
+.note-preview th,
+.note-preview td {
+  text-align: left;
+  padding: 8px 10px;
+  border: 1px solid #d7deeb;
+}
+
+.note-preview strong {
+  font-weight: 700;
+}
+
+.note-preview ul li::marker,
+.note-preview ol li::marker {
+  color: #2e5db8;
 }
 
 .editor-grid {
@@ -468,6 +510,9 @@ body {
   border-top: 1px solid #d7dde5;
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(6px);
+  position: sticky;
+  bottom: 0;
+  z-index: 20;
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
@@ -647,7 +692,13 @@ body {
   color: #dbe5ff;
 }
 
+.theme-dark .note-preview h1,
+.theme-dark .note-preview h2 {
+  border-bottom-color: #33425f;
+}
+
 .theme-dark .note-preview blockquote {
+  background: #162641;
   border-left-color: #557fd4;
   color: #acc0e6;
 }
@@ -672,6 +723,26 @@ body {
 
 .theme-dark .note-preview hr {
   border-top-color: #33425f;
+}
+
+.theme-dark .note-preview img {
+  border-color: #334664;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.28);
+}
+
+.theme-dark .note-preview table,
+.theme-dark .note-preview th,
+.theme-dark .note-preview td {
+  border-color: #334664;
+}
+
+.theme-dark .note-preview thead tr {
+  background: #1a2a45;
+}
+
+.theme-dark .note-preview ul li::marker,
+.theme-dark .note-preview ol li::marker {
+  color: #7ea6ff;
 }
 
 .theme-dark .monaco-editor-host {

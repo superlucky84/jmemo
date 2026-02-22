@@ -1,6 +1,7 @@
 export type VimWriteHandlers = {
   onSave?: () => void;
   onSaveAndClose?: () => void | Promise<void>;
+  onQuit?: () => void;
 };
 
 type VimApiLike = {
@@ -50,6 +51,10 @@ export function bindVimWriteCommands(
     }
 
     activeHandlers.onSave?.();
+  });
+
+  vimApi.defineEx("quit", "q", () => {
+    activeHandlers.onQuit?.();
   });
 
   commandsRegistered = true;

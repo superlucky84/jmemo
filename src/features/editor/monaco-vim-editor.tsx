@@ -10,11 +10,22 @@ type EditorDisposable = {
   dispose: () => void;
 };
 
+type VimAdapterLike = {
+  dispose?: () => void;
+  state?: {
+    vim?: {
+      insertMode?: boolean;
+    };
+  };
+};
+
 export type MonacoVimEditorProps = {
   value: string;
   onChange: (value: string) => void;
+  focusSignal?: number;
   onSave?: () => void;
   onSaveAndClose?: () => void | Promise<void>;
+  onQuit?: () => void;
   onCursorLineChange?: (lineNumber: number) => void;
   onImageUpload?: (file: File) => Promise<string>;
   onUploadError?: (error: unknown) => void;
@@ -54,6 +65,17 @@ function insertAtSelection(value: string, start: number, end: number, insertedTe
   return `${value.slice(0, start)}${insertedText}${value.slice(end)}`;
 }
 
+function toVimApi(module: MonacoVimModule | null) {
+  return (module as {
+    VimMode?: {
+      Vim?: {
+        handleKey?: (cm: unknown, key: string, origin?: string) => void;
+        exitInsertMode?: (cm: unknown) => void;
+      };
+    };
+  } | null)?.VimMode?.Vim;
+}
+
 export const MonacoVimEditor = mount<MonacoVimEditorProps>((renew, props) => {
   const hostRef = ref<HTMLDivElement | null>(null);
   const statusRef = ref<HTMLDivElement | null>(null);
@@ -66,10 +88,14 @@ export const MonacoVimEditor = mount<MonacoVimEditorProps>((renew, props) => {
   let monacoEditorModule: MonacoEditorModule | null = null;
   let monacoVimModule: MonacoVimModule | null = null;
   let editor: MonacoEditorInstance | null = null;
-  let vimAdapter: { dispose?: () => void } | null = null;
+  let vimAdapter: VimAdapterLike | null = null;
   const disposables: EditorDisposable[] = [];
   let syncingFromProps = false;
   let unmounted = false;
+  let focusFrameId = 0;
+  let pendingFocus = false;
+  let pendingForceNormalMode = false;
+  let lastFocusSignal = Number(props.focusSignal ?? 0) - 1;
 
   const updateCursorFromFallback = () => {
     const element = fallbackInputRef.value;
@@ -154,6 +180,85 @@ export const MonacoVimEditor = mount<MonacoVimEditorProps>((renew, props) => {
     }
   };
 
+  const ensureVimNormalMode = () => {
+    const vimApi = toVimApi(monacoVimModule);
+    if (!vimApi?.handleKey || !vimAdapter) {
+      return;
+    }
+
+    try {
+      if (vimAdapter.state?.vim?.insertMode && vimApi.exitInsertMode) {
+        vimApi.exitInsertMode(vimAdapter);
+      }
+      vimApi.handleKey(vimAdapter, "<Esc>", "api");
+    } catch {
+      // no-op: keep editor usable even if vim API internals change
+    }
+  };
+
+  const focusEditorSurface = (forceNormalMode = false) => {
+    if (fallbackMode.v) {
+      const textarea = fallbackInputRef.value;
+      if (!textarea) {
+        return false;
+      }
+
+      textarea.focus();
+      props.onCursorLineChange?.(lineNumberFromOffset(textarea.value, textarea.selectionStart ?? 0));
+      return true;
+    }
+
+    if (!editor) {
+      return false;
+    }
+
+    editor.focus();
+    if (forceNormalMode) {
+      ensureVimNormalMode();
+    }
+    return true;
+  };
+
+  const flushFocusRequest = () => {
+    if (focusFrameId || unmounted) {
+      return;
+    }
+
+    focusFrameId = requestAnimationFrame(() => {
+      focusFrameId = 0;
+      if (!pendingFocus) {
+        return;
+      }
+
+      if (focusEditorSurface(pendingForceNormalMode)) {
+        pendingFocus = false;
+        pendingForceNormalMode = false;
+        return;
+      }
+
+      flushFocusRequest();
+    });
+  };
+
+  const requestEditorFocus = (forceNormalMode = false) => {
+    pendingFocus = true;
+    pendingForceNormalMode = pendingForceNormalMode || forceNormalMode;
+
+    if (focusEditorSurface(pendingForceNormalMode)) {
+      pendingFocus = false;
+      pendingForceNormalMode = false;
+      return;
+    }
+
+    flushFocusRequest();
+  };
+
+  const requestEditorFocusAfterWriteEnter = () => {
+    requestAnimationFrame(() => {
+      requestEditorFocus(true);
+    });
+  };
+
   const syncEditorFromProp = () => {
     if (!editor || fallbackMode.v) {
       return;
@@ -166,8 +271,9 @@ export const MonacoVimEditor = mount<MonacoVimEditorProps>((renew, props) => {
         }
       },
       {
-      onSave: props.onSave,
-      onSaveAndClose: props.onSaveAndClose
+        onSave: props.onSave,
+        onSaveAndClose: props.onSaveAndClose,
+        onQuit: props.onQuit
       }
     );
 
@@ -183,6 +289,7 @@ export const MonacoVimEditor = mount<MonacoVimEditorProps>((renew, props) => {
 
   mountCallback(() => {
     props.onCursorLineChange?.(1);
+    requestEditorFocus(true);
 
     if (!isMonacoRuntimeAvailable()) {
       fallbackMode.v = true;
@@ -200,7 +307,8 @@ export const MonacoVimEditor = mount<MonacoVimEditorProps>((renew, props) => {
         const [monacoLoaded, monacoVimLoaded] = await Promise.all([
           import("monaco-editor/esm/vs/editor/editor.api"),
           import("monaco-vim"),
-          import("monaco-editor/min/vs/editor/editor.main.css")
+          import("monaco-editor/min/vs/editor/editor.main.css"),
+          import("monaco-editor/esm/vs/editor/contrib/linesOperations/browser/linesOperations.js")
         ]);
 
         if (unmounted) {
@@ -218,7 +326,8 @@ export const MonacoVimEditor = mount<MonacoVimEditorProps>((renew, props) => {
           },
           {
             onSave: props.onSave,
-            onSaveAndClose: props.onSaveAndClose
+            onSaveAndClose: props.onSaveAndClose,
+            onQuit: props.onQuit
           }
         );
 
@@ -255,6 +364,8 @@ export const MonacoVimEditor = mount<MonacoVimEditorProps>((renew, props) => {
         const statusNode = statusRef.value;
         vimAdapter = monacoVimLoaded.initVimMode(editor, statusNode ?? null);
         fallbackMode.v = false;
+        ensureVimNormalMode();
+        requestEditorFocusAfterWriteEnter();
         props.onCursorLineChange?.(editor.getPosition()?.lineNumber ?? 1);
       } catch (error) {
         fallbackMode.v = true;
@@ -265,6 +376,10 @@ export const MonacoVimEditor = mount<MonacoVimEditorProps>((renew, props) => {
 
     return () => {
       unmounted = true;
+      if (focusFrameId) {
+        cancelAnimationFrame(focusFrameId);
+        focusFrameId = 0;
+      }
       vimAdapter?.dispose?.();
       disposables.splice(0).forEach((disposable) => {
         disposable.dispose();
@@ -275,6 +390,11 @@ export const MonacoVimEditor = mount<MonacoVimEditorProps>((renew, props) => {
 
   return () => {
     syncEditorFromProp();
+    const focusSignal = Number(props.focusSignal ?? 0);
+    if (focusSignal !== lastFocusSignal) {
+      lastFocusSignal = focusSignal;
+      requestEditorFocus(true);
+    }
 
     return (
       <div
@@ -311,7 +431,7 @@ export const MonacoVimEditor = mount<MonacoVimEditorProps>((renew, props) => {
           }}
         />
         <div className="monaco-vim-status" ref={statusRef}>
-          {fallbackMode.v ? "Fallback editor mode" : "Vim mode ready"}
+          {fallbackMode.v ? "Fallback editor mode (Vim disabled)" : "Vim mode ready"}
         </div>
         {uploading.v ? <div className="hint">Uploading image...</div> : null}
         {localMessage.v ? <div className="hint">{localMessage.v}</div> : null}

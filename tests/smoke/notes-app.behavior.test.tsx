@@ -311,6 +311,41 @@ describe("NotesApp behavior", () => {
     expect(container.querySelector(".empty")).not.toBeNull();
   });
 
+  it("moves focus into editor after :e command", async () => {
+    const listNotes = vi.fn(async () => [
+      {
+        _id: "000000000000000000000001",
+        title: "focus note",
+        category: [],
+        favorite: false
+      }
+    ]);
+    const getNote = vi.fn(async () => ({
+      _id: "000000000000000000000001",
+      title: "focus note",
+      note: "body",
+      category: []
+    }));
+
+    const app = <NotesApp api={createBaseApi({ listNotes, getNote })} />;
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    activeUnmounts.push(render(app, container));
+    await flushMicrotasks();
+
+    const noteButton = container.querySelector(".list-main") as HTMLButtonElement;
+    noteButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await flushMicrotasks();
+
+    const commandInput = container.querySelector(".command-input") as HTMLInputElement;
+    commandInput.focus();
+    await runFooterCommand(container, ":e");
+    await flushMicrotasks();
+
+    const noteInput = container.querySelector(".note-input") as HTMLTextAreaElement;
+    expect(document.activeElement).toBe(noteInput);
+  });
+
   it("focuses global footer command input on ':' shortcut", async () => {
     const app = <NotesApp api={createBaseApi()} />;
     const container = document.createElement("div");
@@ -327,6 +362,153 @@ describe("NotesApp behavior", () => {
     await flushMicrotasks();
 
     const commandInput = container.querySelector(".command-input") as HTMLInputElement;
+    expect(commandInput.value).toBe(":");
+  });
+
+  it("keeps list/content scroll states independent", async () => {
+    const listNotes = vi.fn(async () => [
+      {
+        _id: "000000000000000000000001",
+        title: "note-1",
+        category: [],
+        favorite: false
+      },
+      {
+        _id: "000000000000000000000002",
+        title: "note-2",
+        category: [],
+        favorite: false
+      }
+    ]);
+    const getNote = vi.fn(async () => ({
+      _id: "000000000000000000000001",
+      title: "note-1",
+      note: "body",
+      category: []
+    }));
+
+    const app = <NotesApp api={createBaseApi({ listNotes, getNote })} />;
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    activeUnmounts.push(render(app, container));
+    await flushMicrotasks();
+
+    const listArea = container.querySelector(".list-area") as HTMLElement;
+    const contentBody = container.querySelector(".content-body") as HTMLElement;
+
+    listArea.scrollTop = 120;
+    listArea.dispatchEvent(new Event("scroll", { bubbles: true }));
+    expect(contentBody.scrollTop).toBe(0);
+
+    contentBody.scrollTop = 240;
+    contentBody.dispatchEvent(new Event("scroll", { bubbles: true }));
+    expect(listArea.scrollTop).toBe(120);
+  });
+
+  it("keeps write mode fixed two-pane layout and hides sidebar", async () => {
+    const app = <NotesApp api={createBaseApi()} />;
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    activeUnmounts.push(render(app, container));
+    await flushMicrotasks();
+
+    const newButton = [...container.querySelectorAll(".button")].find(
+      (element) => element.textContent?.trim() === "New"
+    ) as HTMLButtonElement;
+    newButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await flushMicrotasks();
+
+    expect(container.querySelector(".layout.layout-write")).not.toBeNull();
+    expect(container.querySelector(".sidebar")).toBeNull();
+    expect(container.querySelector(".editor-grid .editor-panel")).not.toBeNull();
+    expect(container.querySelector(".editor-grid .preview-panel")).not.toBeNull();
+  });
+
+  it("keeps command footer visible across list/view/write transitions", async () => {
+    const listNotes = vi.fn(async () => [
+      {
+        _id: "000000000000000000000001",
+        title: "footer-note",
+        category: [],
+        favorite: false
+      }
+    ]);
+    const getNote = vi.fn(async () => ({
+      _id: "000000000000000000000001",
+      title: "footer-note",
+      note: "body",
+      category: []
+    }));
+
+    const app = <NotesApp api={createBaseApi({ listNotes, getNote })} />;
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    activeUnmounts.push(render(app, container));
+    await flushMicrotasks();
+
+    expect(container.querySelector(".command-footer")).not.toBeNull();
+
+    const noteButton = container.querySelector(".list-main") as HTMLButtonElement;
+    noteButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await flushMicrotasks();
+    expect(container.querySelector(".viewer")).not.toBeNull();
+    expect(container.querySelector(".command-footer")).not.toBeNull();
+
+    await runFooterCommand(container, ":e");
+    expect(container.querySelector(".editor-grid")).not.toBeNull();
+    expect(container.querySelector(".command-footer")).not.toBeNull();
+
+    await runFooterCommand(container, ":q");
+    expect(container.querySelector(".viewer")).not.toBeNull();
+    expect(container.querySelector(".command-footer")).not.toBeNull();
+  });
+
+  it("prioritizes editor focused key handling over global ':' shortcut", async () => {
+    const app = <NotesApp api={createBaseApi()} />;
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    activeUnmounts.push(render(app, container));
+    await flushMicrotasks();
+
+    const newButton = [...container.querySelectorAll(".button")].find(
+      (element) => element.textContent?.trim() === "New"
+    ) as HTMLButtonElement;
+    newButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await flushMicrotasks();
+
+    const commandInput = container.querySelector(".command-input") as HTMLInputElement;
+    commandInput.value = "";
+    commandInput.dispatchEvent(new Event("input", { bubbles: true }));
+
+    const noteInput = container.querySelector(".note-input") as HTMLTextAreaElement;
+    noteInput.dispatchEvent(
+      new KeyboardEvent("keydown", {
+        key: ":",
+        bubbles: true
+      })
+    );
+    await flushMicrotasks();
+    expect(commandInput.value).toBe("");
+
+    const fakeMonacoEditor = document.createElement("div");
+    fakeMonacoEditor.className = "monaco-editor";
+    container.appendChild(fakeMonacoEditor);
+    fakeMonacoEditor.dispatchEvent(
+      new KeyboardEvent("keydown", {
+        key: ":",
+        bubbles: true
+      })
+    );
+    await flushMicrotasks();
+    expect(commandInput.value).toBe("");
+
+    window.dispatchEvent(
+      new KeyboardEvent("keydown", {
+        key: ":",
+        bubbles: true
+      })
+    );
+    await flushMicrotasks();
     expect(commandInput.value).toBe(":");
   });
 

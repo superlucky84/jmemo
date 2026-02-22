@@ -27,15 +27,20 @@ describe("bindVimWriteCommands", () => {
     __resetVimWriteCommandsForTest();
   });
 
-  it("registers :w and :wq once", () => {
+  it("registers :w, :wq and :q once", () => {
     const { commands, vimModule } = createVimModuleMock();
     const save = vi.fn();
     const saveAndClose = vi.fn();
+    const quit = vi.fn();
 
-    expect(bindVimWriteCommands(vimModule, { onSave: save, onSaveAndClose: saveAndClose })).toBe(true);
-    expect(bindVimWriteCommands(vimModule, { onSave: save, onSaveAndClose: saveAndClose })).toBe(true);
+    expect(bindVimWriteCommands(vimModule, { onSave: save, onSaveAndClose: saveAndClose, onQuit: quit })).toBe(
+      true
+    );
+    expect(bindVimWriteCommands(vimModule, { onSave: save, onSaveAndClose: saveAndClose, onQuit: quit })).toBe(
+      true
+    );
 
-    expect(commands.map((item) => item.shortName)).toEqual(["w", "wq"]);
+    expect(commands.map((item) => item.shortName)).toEqual(["w", "wq", "q"]);
   });
 
   it("executes latest onSave handler for :w", () => {
@@ -62,6 +67,16 @@ describe("bindVimWriteCommands", () => {
 
     expect(saveAndClose).toHaveBeenCalledTimes(1);
     expect(save).not.toHaveBeenCalled();
+  });
+
+  it("executes onQuit for :q when provided", () => {
+    const { commands, vimModule } = createVimModuleMock();
+    const quit = vi.fn();
+
+    bindVimWriteCommands(vimModule, { onQuit: quit });
+    commands.find((item) => item.shortName === "q")?.callback();
+
+    expect(quit).toHaveBeenCalledTimes(1);
   });
 
   it("returns false when Vim API is missing", () => {
