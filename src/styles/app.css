@@ -481,7 +481,7 @@ body {
   overflow: auto;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
 .preview-panel {
@@ -495,15 +495,25 @@ body {
 }
 
 .preview-block {
-  border: 1px solid #e3e8f2;
-  border-radius: 8px;
-  background: #fff;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
 }
 
 .preview-block .note-preview {
   margin-top: 0;
   border: 0;
-  border-radius: 8px;
+  border-radius: 0;
+  background: transparent;
+  padding: 4px 2px;
+}
+
+.preview-block .note-preview > :first-child {
+  margin-top: 4px;
+}
+
+.preview-block .note-preview > :last-child {
+  margin-bottom: 4px;
 }
 
 .command-footer {
@@ -618,10 +628,18 @@ body {
 .theme-dark .viewer,
 .theme-dark .empty,
 .theme-dark .editor-panel,
-.theme-dark .preview-panel,
-.theme-dark .preview-block {
+.theme-dark .preview-panel {
   border-color: #2a3650;
   background: rgba(20, 28, 44, 0.92);
+}
+
+.theme-dark .preview-block {
+  border: 0;
+  background: transparent;
+}
+
+.theme-dark .preview-block .note-preview {
+  background: transparent;
 }
 
 .theme-dark .auth-inline {
