@@ -1,9 +1,80 @@
-const FENCE_PATTERN = /^```/;
-const HEADING_PATTERN = /^(#{1,6})\s+(.*)$/;
-const HR_PATTERN = /^(?:-{3,}|\*{3,}|_{3,})$/;
-const BLOCKQUOTE_PATTERN = /^>\s?(.*)$/;
-const ORDERED_LIST_PATTERN = /^\s*\d+\.\s+(.+)$/;
-const UNORDERED_LIST_PATTERN = /^\s*[-*+]\s+(.+)$/;
+import MarkdownIt from "markdown-it";
+
+const CODE_TOKEN_PATTERN = /@@CODETOKEN(\d+)@@/g;
+
+const SCRIPT_KEYWORDS = new Set([
+  "as",
+  "async",
+  "await",
+  "break",
+  "case",
+  "catch",
+  "class",
+  "const",
+  "continue",
+  "debugger",
+  "default",
+  "delete",
+  "do",
+  "else",
+  "enum",
+  "export",
+  "extends",
+  "finally",
+  "for",
+  "from",
+  "function",
+  "if",
+  "implements",
+  "import",
+  "in",
+  "instanceof",
+  "interface",
+  "let",
+  "new",
+  "of",
+  "private",
+  "protected",
+  "public",
+  "readonly",
+  "return",
+  "static",
+  "super",
+  "switch",
+  "throw",
+  "try",
+  "type",
+  "typeof",
+  "var",
+  "void",
+  "while",
+  "with",
+  "yield"
+]);
+
+const SCRIPT_LITERALS = new Set(["false", "null", "true", "undefined", "NaN", "Infinity"]);
+
+const BASH_KEYWORDS = new Set([
+  "if",
+  "then",
+  "fi",
+  "for",
+  "in",
+  "do",
+  "done",
+  "case",
+  "esac",
+  "while",
+  "until",
+  "elif",
+  "else",
+  "function",
+  "local",
+  "export",
+  "return"
+]);
+
+const BASH_BUILTINS = new Set(["cd", "echo", "env", "exit", "pwd", "read", "set", "unset"]);
 
 function escapeHtml(value: string) {
   return value
@@ -14,28 +85,131 @@ function escapeHtml(value: string) {
     .replaceAll("'", "&#39;");
 }
 
-function escapeAttribute(value: string) {
-  return escapeHtml(value);
-}
-
-function parseLinkDestination(rawDestination: string) {
-  const destination = rawDestination.trim();
-  const withTitle = destination.match(/^(\S+)\s+"([^"]*)"$/);
-
-  if (withTitle) {
-    return {
-      url: withTitle[1],
-      title: withTitle[2]
-    };
+function normalizeCodeFenceLanguage(rawLanguage: string) {
+  const value = rawLanguage.trim().split(/\s+/)[0]?.toLowerCase() ?? "";
+  if (!value) {
+    return "";
   }
 
-  return {
-    url: destination,
-    title: ""
+  const aliases: Record<string, string> = {
+    javascript: "js",
+    typescript: "ts",
+    node: "js",
+    mjs: "js",
+    cjs: "js",
+    sh: "bash",
+    shell: "bash",
+    zsh: "bash"
   };
+
+  return aliases[value] ?? value;
 }
 
-function sanitizeUrl(rawUrl: string) {
+function putCodeToken(tokens: string[], html: string) {
+  const token = `@@CODETOKEN${tokens.length}@@`;
+  tokens.push(html);
+  return token;
+}
+
+function wrapCodeToken(className: string, rawText: string) {
+  return `<span class="${className}">${escapeHtml(rawText)}</span>`;
+}
+
+function restoreCodeTokens(text: string, tokens: string[]) {
+  return text.replace(CODE_TOKEN_PATTERN, (_, indexText: string) => {
+    const index = Number(indexText);
+    return tokens[index] ?? "";
+  });
+}
+
+function highlightScriptCode(rawCode: string) {
+  const tokens: string[] = [];
+  let text = rawCode;
+
+  text = text.replace(
+    /`(?:\\[\s\S]|[^`])*`|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'/g,
+    (match) => putCodeToken(tokens, wrapCodeToken("tok-string", match))
+  );
+  text = text.replace(/\/\*[\s\S]*?\*\//g, (match) => putCodeToken(tokens, wrapCodeToken("tok-comment", match)));
+  text = text.replace(/\/\/[^\n\r]*/g, (match) => putCodeToken(tokens, wrapCodeToken("tok-comment", match)));
+
+  text = escapeHtml(text);
+
+  text = text.replace(/\b[A-Za-z_$][A-Za-z0-9_$]*\b/g, (word) => {
+    if (SCRIPT_KEYWORDS.has(word)) {
+      return `<span class="tok-keyword">${word}</span>`;
+    }
+
+    if (SCRIPT_LITERALS.has(word)) {
+      return `<span class="tok-literal">${word}</span>`;
+    }
+
+    return word;
+  });
+
+  text = text.replace(
+    /\b(?:0x[0-9a-fA-F]+|0b[01]+|0o[0-7]+|\d+(?:\.\d+)?(?:e[+-]?\d+)?)\b/g,
+    '<span class="tok-number">$&</span>'
+  );
+
+  return restoreCodeTokens(text, tokens);
+}
+
+function highlightBashCode(rawCode: string) {
+  const tokens: string[] = [];
+  let text = rawCode;
+
+  text = text.replace(
+    /`(?:\\[\s\S]|[^`])*`|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'/g,
+    (match) => putCodeToken(tokens, wrapCodeToken("tok-string", match))
+  );
+  text = text.replace(/(^|[ \t])#([^\n\r]*)/g, (_, prefix: string, body: string) => {
+    return `${prefix}${putCodeToken(tokens, wrapCodeToken("tok-comment", `#${body}`))}`;
+  });
+  text = text.replace(/\$(?:[A-Za-z_][A-Za-z0-9_]*|\{[^}\n]+\}|\d+)/g, (match) =>
+    putCodeToken(tokens, wrapCodeToken("tok-variable", match))
+  );
+
+  text = escapeHtml(text);
+
+  text = text.replace(/(^|[\s;|&()])(--?[A-Za-z0-9][A-Za-z0-9-]*)/g, (_, prefix: string, flag: string) => {
+    return `${prefix}<span class="tok-attr">${flag}</span>`;
+  });
+
+  text = text.replace(/\b\d+(?:\.\d+)?\b/g, '<span class="tok-number">$&</span>');
+
+  text = text.replace(/\b[A-Za-z_][A-Za-z0-9_]*\b/g, (word) => {
+    if (BASH_KEYWORDS.has(word)) {
+      return `<span class="tok-keyword">${word}</span>`;
+    }
+
+    if (BASH_BUILTINS.has(word)) {
+      return `<span class="tok-function">${word}</span>`;
+    }
+
+    return word;
+  });
+
+  return restoreCodeTokens(text, tokens);
+}
+
+function highlightCode(rawCode: string, language: string) {
+  if (language === "bash") {
+    return highlightBashCode(rawCode);
+  }
+
+  if (language === "js" || language === "ts" || language === "jsx" || language === "tsx") {
+    return highlightScriptCode(rawCode);
+  }
+
+  return escapeHtml(rawCode);
+}
+
+type SanitizeOptions = {
+  allowMailToTel?: boolean;
+};
+
+function sanitizeUrl(rawUrl: string, options: SanitizeOptions = {}) {
   const trimmed = rawUrl.trim();
   if (!trimmed) {
     return null;
@@ -50,184 +224,135 @@ function sanitizeUrl(rawUrl: string) {
     return null;
   }
 
-  const scheme = trimmed.match(/^[a-zA-Z][a-zA-Z0-9+.-]*:/)?.[0]?.toLowerCase() ?? "";
-  if (scheme && !["http:", "https:", "mailto:", "tel:"].includes(scheme)) {
+  const allowMailToTel = options.allowMailToTel ?? true;
+  const allowedSchemes = allowMailToTel ? new Set(["http", "https", "mailto", "tel"]) : new Set(["http", "https"]);
+  const scheme = trimmed.match(/^([a-zA-Z][a-zA-Z0-9+.-]*):/)?.[1]?.toLowerCase() ?? "";
+
+  if (scheme && !allowedSchemes.has(scheme)) {
     return null;
   }
 
-  return escapeAttribute(trimmed);
+  return trimmed;
 }
 
-function renderInline(rawText: string) {
-  const tokens: string[] = [];
-  const putToken = (html: string) => {
-    const token = `@@MDTOKEN${tokens.length}@@`;
-    tokens.push(html);
-    return token;
-  };
+function readTokenLineRange(token: { map: [number, number] | null }) {
+  const map = token.map;
+  if (!map) {
+    return null;
+  }
 
-  let text = rawText;
+  const start = Math.max(1, map[0] + 1);
+  const end = Math.max(start, map[1]);
+  return { start, end };
+}
 
-  text = text.replace(/`([^`]+)`/g, (_, codeText: string) =>
-    putToken(`<code>${escapeHtml(codeText)}</code>`)
-  );
+function tokenLineAttrs(token: {
+  attrGet: (name: string) => string | null;
+  map: [number, number] | null;
+}) {
+  const start = token.attrGet("data-line-start");
+  const end = token.attrGet("data-line-end");
 
-  text = text.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (_, alt: string, destination: string) => {
-    const parsed = parseLinkDestination(destination);
-    const url = sanitizeUrl(parsed.url);
-    if (!url) {
-      return escapeHtml(`![${alt}](${destination})`);
+  if (start && end) {
+    return ` data-line-start="${escapeHtml(start)}" data-line-end="${escapeHtml(end)}"`;
+  }
+
+  const range = readTokenLineRange(token);
+  if (!range) {
+    return "";
+  }
+
+  return ` data-line-start="${range.start}" data-line-end="${range.end}"`;
+}
+
+const markdownParser = new MarkdownIt({
+  html: false,
+  linkify: true,
+  breaks: true
+});
+
+// Allow parsing of all markdown links first, then apply project-specific URL sanitation in renderer.
+markdownParser.validateLink = () => true;
+
+markdownParser.core.ruler.push("attach_line_map_attrs", (state) => {
+  for (const token of state.tokens) {
+    const isOpeningOrStandalone = token.nesting === 1 || token.nesting === 0;
+    const hasRenderableTag = Boolean(token.tag);
+
+    if (!token.block || !token.map || !isOpeningOrStandalone || !hasRenderableTag) {
+      continue;
     }
 
-    const title = parsed.title ? ` title="${escapeAttribute(parsed.title)}"` : "";
-    return putToken(`<img src="${url}" alt="${escapeAttribute(alt)}"${title} />`);
-  });
+    const range = readTokenLineRange(token);
+    if (!range) {
+      continue;
+    }
 
-  text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, label: string, destination: string) => {
-    const parsed = parseLinkDestination(destination);
-    const url = sanitizeUrl(parsed.url) ?? "#";
-    const title = parsed.title ? ` title="${escapeAttribute(parsed.title)}"` : "";
-    return putToken(`<a href="${url}" target="_blank" rel="noreferrer noopener"${title}>${escapeHtml(label)}</a>`);
-  });
+    token.attrSet("data-line-start", String(range.start));
+    token.attrSet("data-line-end", String(range.end));
+  }
+});
 
-  text = escapeHtml(text);
+const originalLinkOpen = markdownParser.renderer.rules.link_open;
+markdownParser.renderer.rules.link_open = (tokens, idx, options, env, self) => {
+  const token = tokens[idx];
+  const href = token.attrGet("href") ?? "";
+  const sanitized = sanitizeUrl(href, { allowMailToTel: true });
 
-  text = text.replace(/(\*\*|__)(?=\S)([\s\S]*?\S)\1/g, "<strong>$2</strong>");
-  text = text.replace(/(\*|_)(?=\S)([\s\S]*?\S)\1/g, "<em>$2</em>");
-  text = text.replace(/~~(?=\S)([\s\S]*?\S)~~/g, "<del>$1</del>");
+  token.attrSet("href", sanitized ?? "#");
+  token.attrSet("target", "_blank");
+  token.attrSet("rel", "noreferrer noopener");
 
-  text = text.replace(/@@MDTOKEN(\d+)@@/g, (_, indexText: string) => {
-    const index = Number(indexText);
-    return tokens[index] ?? "";
-  });
-
-  return text;
-}
-
-function startsBlock(line: string) {
-  const trimmed = line.trim();
-  if (!trimmed) {
-    return false;
+  if (originalLinkOpen) {
+    return originalLinkOpen(tokens, idx, options, env, self);
   }
 
-  return (
-    FENCE_PATTERN.test(trimmed) ||
-    HEADING_PATTERN.test(trimmed) ||
-    HR_PATTERN.test(trimmed) ||
-    BLOCKQUOTE_PATTERN.test(trimmed) ||
-    ORDERED_LIST_PATTERN.test(trimmed) ||
-    UNORDERED_LIST_PATTERN.test(trimmed)
-  );
-}
+  return self.renderToken(tokens, idx, options);
+};
 
-function listItemContent(line: string, type: "ol" | "ul") {
-  if (type === "ol") {
-    return line.match(ORDERED_LIST_PATTERN)?.[1] ?? "";
+const originalImage = markdownParser.renderer.rules.image;
+markdownParser.renderer.rules.image = (tokens, idx, options, env, self) => {
+  const token = tokens[idx];
+  const src = token.attrGet("src") ?? "";
+  const sanitized = sanitizeUrl(src, { allowMailToTel: false });
+
+  if (!sanitized) {
+    const altText =
+      token.content ??
+      token.children?.map((child) => child.content).join("").trim() ??
+      "";
+    return escapeHtml(altText);
   }
 
-  return line.match(UNORDERED_LIST_PATTERN)?.[1] ?? "";
-}
+  token.attrSet("src", sanitized);
+
+  if (originalImage) {
+    return originalImage(tokens, idx, options, env, self);
+  }
+
+  return self.renderToken(tokens, idx, options);
+};
+
+markdownParser.renderer.rules.fence = (tokens, idx) => {
+  const token = tokens[idx];
+  const language = normalizeCodeFenceLanguage(token.info ?? "");
+  const languageClass = language ? ` class="language-${escapeHtml(language)}"` : "";
+  const lineAttrs = tokenLineAttrs(token);
+  return `<pre${lineAttrs}><code${languageClass}>${highlightCode(token.content, language)}</code></pre>`;
+};
+
+markdownParser.renderer.rules.code_block = (tokens, idx) => {
+  const token = tokens[idx];
+  const lineAttrs = tokenLineAttrs(token);
+  return `<pre${lineAttrs}><code>${escapeHtml(token.content)}</code></pre>`;
+};
 
 export function renderMarkdownToHtml(markdown: string) {
   const input = String(markdown ?? "").replaceAll("\r\n", "\n").replaceAll("\r", "\n");
-  const lines = input.split("\n");
-  const htmlParts: string[] = [];
 
   if (input.trim() === "") {
     return "<p>&nbsp;</p>";
   }
 
-  let index = 0;
-  while (index < lines.length) {
-    const line = lines[index] ?? "";
-    const trimmed = line.trim();
-
-    if (!trimmed) {
-      index += 1;
-      continue;
-    }
-
-    if (FENCE_PATTERN.test(trimmed)) {
-      const language = trimmed.slice(3).trim().split(/\s+/)[0] ?? "";
-      index += 1;
-      const codeLines: string[] = [];
-
-      while (index < lines.length && !FENCE_PATTERN.test(lines[index]?.trim() ?? "")) {
-        codeLines.push(lines[index] ?? "");
-        index += 1;
-      }
-
-      if (index < lines.length && FENCE_PATTERN.test(lines[index]?.trim() ?? "")) {
-        index += 1;
-      }
-
-      const languageClass = language ? ` class="language-${escapeAttribute(language)}"` : "";
-      htmlParts.push(`<pre><code${languageClass}>${escapeHtml(codeLines.join("\n"))}</code></pre>`);
-      continue;
-    }
-
-    const headingMatch = line.match(HEADING_PATTERN);
-    if (headingMatch) {
-      const level = headingMatch[1].length;
-      const text = headingMatch[2] ?? "";
-      htmlParts.push(`<h${level}>${renderInline(text)}</h${level}>`);
-      index += 1;
-      continue;
-    }
-
-    if (HR_PATTERN.test(trimmed)) {
-      htmlParts.push("<hr>");
-      index += 1;
-      continue;
-    }
-
-    if (BLOCKQUOTE_PATTERN.test(line)) {
-      const quoteLines: string[] = [];
-      while (index < lines.length) {
-        const quoteMatch = (lines[index] ?? "").match(BLOCKQUOTE_PATTERN);
-        if (!quoteMatch) {
-          break;
-        }
-        quoteLines.push(quoteMatch[1] ?? "");
-        index += 1;
-      }
-      htmlParts.push(`<blockquote>${renderMarkdownToHtml(quoteLines.join("\n"))}</blockquote>`);
-      continue;
-    }
-
-    const isOrderedList = ORDERED_LIST_PATTERN.test(line);
-    const isUnorderedList = UNORDERED_LIST_PATTERN.test(line);
-    if (isOrderedList || isUnorderedList) {
-      const type: "ol" | "ul" = isOrderedList ? "ol" : "ul";
-      const items: string[] = [];
-      while (index < lines.length) {
-        const currentLine = lines[index] ?? "";
-        if (!(type === "ol" ? ORDERED_LIST_PATTERN.test(currentLine) : UNORDERED_LIST_PATTERN.test(currentLine))) {
-          break;
-        }
-        items.push(`<li>${renderInline(listItemContent(currentLine, type))}</li>`);
-        index += 1;
-      }
-      htmlParts.push(`<${type}>${items.join("")}</${type}>`);
-      continue;
-    }
-
-    const paragraphLines: string[] = [];
-    while (index < lines.length) {
-      const currentLine = lines[index] ?? "";
-      const currentTrimmed = currentLine.trim();
-      if (!currentTrimmed) {
-        break;
-      }
-      if (paragraphLines.length > 0 && startsBlock(currentLine)) {
-        break;
-      }
-      paragraphLines.push(currentLine);
-      index += 1;
-    }
-
-    htmlParts.push(`<p>${paragraphLines.map((text) => renderInline(text)).join("<br>")}</p>`);
-  }
-
-  return htmlParts.join("");
+  return markdownParser.render(input).trim();
 }

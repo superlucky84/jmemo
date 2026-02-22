@@ -59,11 +59,22 @@ export function findPreviewBlock(blocks: PreviewBlock[], lineNumber: number): Pr
     return null;
   }
 
+  let bestMatch: PreviewBlock | null = null;
+  let bestSpan = Number.POSITIVE_INFINITY;
   let fallback: PreviewBlock | null = null;
 
   for (const block of blocks) {
     if (block.start <= lineNumber && lineNumber <= block.end) {
-      return block;
+      const span = Math.max(1, block.end - block.start);
+      if (
+        !bestMatch ||
+        span < bestSpan ||
+        (span === bestSpan && block.start >= bestMatch.start)
+      ) {
+        bestMatch = block;
+        bestSpan = span;
+      }
+      continue;
     }
 
     if (block.start <= lineNumber) {
@@ -71,6 +82,5 @@ export function findPreviewBlock(blocks: PreviewBlock[], lineNumber: number): Pr
     }
   }
 
-  return fallback ?? blocks[0] ?? null;
+  return bestMatch ?? fallback ?? blocks[0] ?? null;
 }
-

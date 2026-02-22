@@ -398,7 +398,7 @@ export const MonacoVimEditor = mount<MonacoVimEditorProps>((renew, props) => {
 
     return (
       <div
-        className="monaco-vim-wrapper"
+        className="monaco-vim-wrapper flex min-h-0 flex-col gap-1.5"
         onDragOver={(event: DragEvent) => {
           event.preventDefault();
         }}
@@ -412,10 +412,13 @@ export const MonacoVimEditor = mount<MonacoVimEditorProps>((renew, props) => {
           void handleImageDrop(file);
         }}
       >
-        <div className={`monaco-editor-host ${fallbackMode.v ? "hidden" : ""}`} ref={hostRef} />
+        <div
+          className={`monaco-editor-host min-h-[320px] w-full overflow-hidden rounded-lg border border-slate-600 ${fallbackMode.v ? "hidden" : ""}`}
+          ref={hostRef}
+        />
         <textarea
           ref={fallbackInputRef}
-          className={`note-input ${fallbackMode.v ? "" : "hidden"}`}
+          className={`note-input min-h-[320px] w-full resize-y rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 font-mono text-sm leading-6 text-slate-100 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-500/30 ${fallbackMode.v ? "" : "hidden"}`}
           value={props.value}
           onInput={(event: InputEvent) => {
             props.onChange((event.target as HTMLTextAreaElement).value);
@@ -430,11 +433,11 @@ export const MonacoVimEditor = mount<MonacoVimEditorProps>((renew, props) => {
             }
           }}
         />
-        <div className="monaco-vim-status" ref={statusRef}>
+        <div className="monaco-vim-status min-h-[22px] font-mono text-xs text-slate-400" ref={statusRef}>
           {fallbackMode.v ? "Fallback editor mode (Vim disabled)" : "Vim mode ready"}
         </div>
-        {uploading.v ? <div className="hint">Uploading image...</div> : null}
-        {localMessage.v ? <div className="hint">{localMessage.v}</div> : null}
+        {uploading.v ? <div className="hint text-sm text-slate-400">Uploading image...</div> : null}
+        {localMessage.v ? <div className="hint text-sm text-slate-400">{localMessage.v}</div> : null}
       </div>
     );
   };

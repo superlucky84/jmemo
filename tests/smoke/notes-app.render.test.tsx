@@ -91,7 +91,7 @@ describe("NotesApp render smoke", () => {
     expect(container.textContent).toContain("jmemo");
     expect(container.textContent).toContain("Search");
     expect(container.textContent).toContain("New");
-    expect(container.querySelector(".app-shell.theme-dark.min-h-screen.flex.flex-col")).not.toBeNull();
+    expect(container.querySelector(".app-shell.theme-dark.flex.h-full.flex-col")).not.toBeNull();
     expect(container.querySelector(".layout.grid.flex-1.min-h-0")).not.toBeNull();
     expect(container.querySelector(".command-footer.sticky.bottom-0.z-20")).not.toBeNull();
   });

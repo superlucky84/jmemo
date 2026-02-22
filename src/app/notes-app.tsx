@@ -4,7 +4,7 @@ import { NotesApiError, notesApi, type NotesApi } from "../features/notes/api/no
 import type { NoteDetail, NoteSummary } from "../features/notes/types";
 import { MonacoVimEditor } from "../features/editor/monaco-vim-editor";
 import { resolveExCommand } from "../features/editor/ex-command-dispatcher";
-import { buildPreviewBlocks, findPreviewBlock } from "../features/preview/line-map";
+import { findPreviewBlock } from "../features/preview/line-map";
 import { renderMarkdownToHtml } from "../features/preview/markdown-render";
 
 type ViewMode = "list" | "view" | "write";
@@ -719,120 +719,170 @@ export const NotesApp = mount<{ api?: NotesApi }>((renew, props) => {
   });
 
   return () => {
-    const previewBlocks = buildPreviewBlocks(formNote.v);
+    const inputClass =
+      "border border-slate-600 bg-slate-900 text-slate-100 placeholder:text-slate-400 rounded-lg px-3 py-2 text-sm outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-500/30";
+    const buttonBaseClass =
+      "button rounded-lg border px-3 py-2 text-sm transition disabled:cursor-not-allowed disabled:opacity-60";
+    const buttonClass =
+      `${buttonBaseClass} border-slate-600 bg-slate-800 text-slate-100 hover:bg-slate-700`;
+    const buttonPrimaryClass =
+      `${buttonBaseClass} primary border-blue-500 bg-blue-500 text-slate-50 hover:bg-blue-400`;
+    const buttonDangerClass =
+      `${buttonBaseClass} danger border-rose-500 bg-transparent text-rose-300 hover:bg-rose-500/15`;
+    const hintClass = "hint text-sm text-slate-400";
+    const bannerBase = "banner rounded-lg border px-3 py-2 text-sm";
+    const scrollAreaClass =
+      "overscroll-contain [-webkit-overflow-scrolling:touch] [scrollbar-width:thin] [scrollbar-color:#4e648f_#1a2538] [&::-webkit-scrollbar]:h-2.5 [&::-webkit-scrollbar]:w-2.5 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:bg-slate-800 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-500";
+    const notePreviewClass =
+      "note-preview mt-3 rounded-xl border border-slate-700 bg-slate-900/90 p-3.5 text-sm leading-7 tracking-[0.01em] text-slate-100 break-words [&>*:first-child]:mt-0 [&>*:last-child]:mb-0 [&_h1]:mt-3.5 [&_h1]:mb-2 [&_h1]:border-b [&_h1]:border-slate-700 [&_h1]:pb-1.5 [&_h1]:text-[1.85rem] [&_h1]:leading-tight [&_h1]:font-bold [&_h2]:mt-3.5 [&_h2]:mb-2 [&_h2]:border-b [&_h2]:border-slate-700 [&_h2]:pb-1 [&_h2]:text-[1.5rem] [&_h2]:leading-tight [&_h2]:font-bold [&_h3]:mt-3 [&_h3]:mb-1.5 [&_h3]:text-[1.2rem] [&_h3]:font-semibold [&_p]:my-2.5 [&_ul]:my-2.5 [&_ul]:pl-5 [&_ol]:my-2.5 [&_ol]:pl-5 [&_li+li]:mt-1 [&_li::marker]:text-blue-300 [&_blockquote]:my-2.5 [&_blockquote]:rounded-md [&_blockquote]:border-l-[3px] [&_blockquote]:border-blue-400 [&_blockquote]:bg-blue-950/35 [&_blockquote]:px-3 [&_blockquote]:py-2 [&_blockquote]:text-slate-300 [&_pre]:my-2.5 [&_pre]:overflow-auto [&_pre]:rounded-lg [&_pre]:border [&_pre]:border-slate-700 [&_pre]:bg-slate-950 [&_pre]:px-3 [&_pre]:py-2.5 [&_code]:rounded [&_code]:bg-slate-800 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-[0.92em] [&_code]:text-slate-100 [&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_a]:text-blue-300 [&_a:hover]:underline [&_img]:max-w-full [&_img]:rounded-lg [&_img]:border [&_img]:border-slate-600 [&_img]:shadow-lg [&_hr]:my-3 [&_hr]:border-0 [&_hr]:border-t [&_hr]:border-slate-700 [&_table]:my-2.5 [&_table]:w-full [&_table]:border-collapse [&_table]:border [&_table]:border-slate-700 [&_thead_tr]:bg-slate-800/70 [&_th]:border [&_th]:border-slate-700 [&_th]:px-2.5 [&_th]:py-2 [&_th]:text-left [&_td]:border [&_td]:border-slate-700 [&_td]:px-2.5 [&_td]:py-2 [&_td]:text-left [&_strong]:font-bold [&_.tok-comment]:italic [&_.tok-comment]:text-slate-400 [&_.tok-keyword]:text-purple-300 [&_.tok-literal]:text-blue-300 [&_.tok-string]:text-lime-300 [&_.tok-number]:text-orange-300 [&_.tok-variable]:text-cyan-300 [&_.tok-function]:text-sky-300 [&_.tok-attr]:text-amber-300";
+    const previewNoteClass =
+      `${notePreviewClass} mt-0 border-0 bg-transparent p-1 [&>*:first-child]:mt-1 [&>*:last-child]:mb-1`;
+    const commandModeClass =
+      mode.v === "write"
+        ? "command-mode mode-write min-w-14 rounded-full bg-blue-950 text-blue-200 px-3 py-1 text-xs font-semibold tracking-wider text-center"
+        : mode.v === "view"
+          ? "command-mode mode-view min-w-14 rounded-full bg-emerald-950 text-emerald-200 px-3 py-1 text-xs font-semibold tracking-wider text-center"
+          : "command-mode mode-list min-w-14 rounded-full bg-slate-800 text-slate-200 px-3 py-1 text-xs font-semibold tracking-wider text-center";
 
     return (
-      <div className="app-shell theme-dark min-h-screen flex flex-col">
-        <div className={`layout grid flex-1 min-h-0 ${mode.v === "write" ? "layout-write" : ""}`}>
+      <div className="app-shell theme-dark flex h-full min-h-[100dvh] flex-col overflow-hidden">
+        <div
+          className={`layout grid h-full flex-1 min-h-0 overflow-hidden ${mode.v === "write" ? "layout-write grid-cols-1" : "grid-cols-[20rem_1fr]"} max-[980px]:grid-cols-1`}
+        >
           {mode.v !== "write" ? (
-            <aside className="sidebar flex min-h-0 flex-col gap-3 p-4">
-            <div className="panel-title">
-              <h1>jmemo</h1>
-              <p>lithent refactor</p>
-            </div>
+            <aside className="sidebar flex min-h-0 flex-col gap-3 overflow-hidden border-r border-slate-800 bg-slate-950/90 p-4 backdrop-blur max-[980px]:border-r-0 max-[980px]:border-b">
+              <div className="panel-title">
+                <h1 className="text-2xl font-semibold tracking-wide text-slate-100">jmemo</h1>
+                <p className="text-xs text-slate-400">lithent refactor</p>
+              </div>
 
-            <div className="toolbar grid gap-2">
-              <input
-                className="search-input"
-                placeholder="Search title or tag"
-                value={searchText.v}
-                onInput={(event: InputEvent) => {
-                  searchText.v = (event.target as HTMLInputElement).value;
-                }}
-                onKeyDown={handleSearchKey}
-              />
-              <button className="button" onClick={runSearch} disabled={listLoading.v}>
-                Search
-              </button>
-              <button className="button primary" onClick={startCreate}>
-                New
-              </button>
-            </div>
-
-            <div className="auth-box rounded-xl">
-              {authLoading.v ? <div className="hint">Checking auth...</div> : null}
-              {!authLoading.v && authEnabled.v && !authenticated.v ? (
-                <form
-                  className="auth-form"
-                  onSubmit={(event: Event) => {
-                    event.preventDefault();
-                    void login();
+              <div className="toolbar grid grid-cols-[minmax(0,1fr)_auto_auto] gap-2">
+                <input
+                  className={`search-input ${inputClass}`}
+                  placeholder="Search title or tag"
+                  value={searchText.v}
+                  onInput={(event: InputEvent) => {
+                    searchText.v = (event.target as HTMLInputElement).value;
                   }}
-                >
-                  <input
-                    className="text-input"
-                    type="password"
-                    placeholder="Password"
-                    value={authPassword.v}
-                    onInput={(event: InputEvent) => {
-                      authPassword.v = (event.target as HTMLInputElement).value;
-                    }}
-                  />
-                  <button className="button" type="submit">
-                    Login
-                  </button>
-                </form>
-              ) : null}
-              {!authLoading.v && authEnabled.v && authenticated.v ? (
-                <div className="auth-state">
-                  <span className="hint">Authenticated</span>
-                  <button className="button" onClick={logout}>
-                    Logout
-                  </button>
-                </div>
-              ) : null}
-              {!authLoading.v && !authEnabled.v ? (
-                <div className="hint">Auth disabled (set AUTH_PASSWORD to enable).</div>
-              ) : null}
-            </div>
+                  onKeyDown={handleSearchKey}
+                />
+                <button className={buttonClass} onClick={runSearch} disabled={listLoading.v}>
+                  Search
+                </button>
+                <button className={buttonPrimaryClass} onClick={startCreate}>
+                  New
+                </button>
+              </div>
 
-            <div className="list-area flex min-h-0 flex-1 flex-col gap-2 overflow-auto pr-1">
-              {listLoading.v ? <div className="hint">Loading...</div> : null}
-              {!listLoading.v && notes.v.length === 0 ? (
-                <div className="hint">No notes found.</div>
-              ) : null}
-              {!listLoading.v &&
-                notes.v.map((item) => (
-                  <div
-                    className={`list-item ${selected.v?._id === item._id ? "active" : ""}`}
-                    key={item._id}
+              <div className="auth-box rounded-xl border border-slate-700 bg-slate-900/70 p-3">
+                {authLoading.v ? <div className={hintClass}>Checking auth...</div> : null}
+                {!authLoading.v && authEnabled.v && !authenticated.v ? (
+                  <form
+                    className="auth-form grid grid-cols-[minmax(0,1fr)_auto] gap-2"
+                    onSubmit={(event: Event) => {
+                      event.preventDefault();
+                      void login();
+                    }}
                   >
-                    <button className="list-main" onClick={() => openNote(item._id)}>
-                      <strong>{item.title || "(untitled)"}</strong>
-                      <span className="tags">{item.category.join(", ") || "-"}</span>
+                    <input
+                      className={`text-input ${inputClass}`}
+                      type="password"
+                      placeholder="Password"
+                      value={authPassword.v}
+                      onInput={(event: InputEvent) => {
+                        authPassword.v = (event.target as HTMLInputElement).value;
+                      }}
+                    />
+                    <button className={buttonClass} type="submit">
+                      Login
                     </button>
-                    <button
-                      className={`favorite ${item.favorite ? "on" : ""}`}
-                      onClick={() => toggleFavorite(item)}
-                      title="Toggle favorite"
-                    >
-                      {item.favorite ? "★" : "☆"}
+                  </form>
+                ) : null}
+                {!authLoading.v && authEnabled.v && authenticated.v ? (
+                  <div className="auth-state flex items-center justify-between gap-2">
+                    <span className={hintClass}>Authenticated</span>
+                    <button className={buttonClass} onClick={logout}>
+                      Logout
                     </button>
                   </div>
-                ))}
-            </div>
+                ) : null}
+                {!authLoading.v && !authEnabled.v ? (
+                  <div className={hintClass}>Auth disabled (set AUTH_PASSWORD to enable).</div>
+                ) : null}
+              </div>
+
+              <div className={`list-area flex min-h-0 flex-1 flex-col gap-2 overflow-auto pr-1 ${scrollAreaClass}`}>
+                {listLoading.v ? <div className={hintClass}>Loading...</div> : null}
+                {!listLoading.v && notes.v.length === 0 ? (
+                  <div className={hintClass}>No notes found.</div>
+                ) : null}
+                {!listLoading.v &&
+                  notes.v.map((item) => (
+                    <div
+                      className={`list-item !flex !flex-row min-h-16 items-stretch rounded-xl border bg-slate-900 ${
+                        selected.v?._id === item._id
+                          ? "active border-blue-400 ring-2 ring-blue-500/30"
+                          : "border-slate-700"
+                      }`}
+                      key={item._id}
+                    >
+                      <button
+                        className="list-main inline-flex flex-1 min-w-0 appearance-none border-0 bg-transparent cursor-pointer flex-col justify-center gap-1 rounded-l-xl px-3 py-2.5 text-left text-slate-100"
+                        onClick={() => openNote(item._id)}
+                      >
+                        <strong>{item.title || "(untitled)"}</strong>
+                        <span className="tags text-xs text-slate-400">{item.category.join(", ") || "-"}</span>
+                      </button>
+                      <button
+                        type="button"
+                        className={`favorite inline-flex h-full w-12 flex-none appearance-none border-0 border-l border-slate-700 bg-transparent p-0 items-center justify-center transition ${
+                          item.favorite
+                            ? "on text-amber-400 bg-slate-800/60"
+                            : "text-slate-300 hover:bg-slate-800 hover:text-amber-300"
+                        }`}
+                        onClick={() => toggleFavorite(item)}
+                        title="Toggle favorite"
+                        aria-label={item.favorite ? "Unfavorite" : "Favorite"}
+                      >
+                        <svg
+                          className={`h-5 w-5 ${item.favorite ? "fill-current" : "fill-transparent"}`}
+                          viewBox="0 0 24 24"
+                          xmlns="http://www.w3.org/2000/svg"
+                          aria-hidden="true"
+                        >
+                          <path
+                            d="M12 2.5l2.95 5.98 6.6.96-4.77 4.65 1.13 6.57L12 17.56 6.09 20.66l1.13-6.57L2.45 9.44l6.6-.96L12 2.5z"
+                            stroke="currentColor"
+                            strokeWidth="1.8"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  ))}
+              </div>
             </aside>
           ) : null}
 
-          <main className={`content flex min-h-0 flex-col ${mode.v === "write" ? "content-write" : ""}`}>
+          <main className={`content flex h-full min-h-0 flex-col gap-3 overflow-hidden p-4 ${mode.v === "write" ? "content-write px-[18px]" : ""}`}>
             <header className="content-header flex items-center justify-between">
               <div>
-                <strong>{mode.v === "write" ? "Write" : "View"}</strong>
+                <strong className="text-slate-100">{mode.v === "write" ? "Write" : "View"}</strong>
               </div>
               <div className="header-actions flex gap-2">
                 {mode.v === "view" ? (
-                  <button className="button" onClick={startEdit} disabled={!selected.v}>
+                  <button className={buttonClass} onClick={startEdit} disabled={!selected.v}>
                     Edit
                   </button>
                 ) : null}
                 {mode.v === "view" ? (
-                  <button className="button danger" onClick={deleteSelected} disabled={deleting.v}>
+                  <button className={buttonDangerClass} onClick={deleteSelected} disabled={deleting.v}>
                     Delete
                   </button>
                 ) : null}
                 {mode.v === "write" ? (
                   <button
-                    className="button primary"
+                    className={buttonPrimaryClass}
                     onClick={() => {
                       void saveNote({
                         closeAfterSave: false
@@ -844,29 +894,37 @@ export const NotesApp = mount<{ api?: NotesApi }>((renew, props) => {
                   </button>
                 ) : null}
                 {mode.v === "write" ? (
-                  <button className="button" onClick={cancelEdit}>
+                  <button className={buttonClass} onClick={cancelEdit}>
                     Cancel
                   </button>
                 ) : null}
               </div>
             </header>
 
-            {errorMessage.v ? <div className="banner error">{errorMessage.v}</div> : null}
-            {statusMessage.v ? <div className="banner ok">{statusMessage.v}</div> : null}
+            {errorMessage.v ? (
+              <div className={`${bannerBase} error border-rose-800 bg-rose-950/50 text-rose-200`}>{errorMessage.v}</div>
+            ) : null}
+            {statusMessage.v ? (
+              <div className={`${bannerBase} ok border-emerald-800 bg-emerald-950/45 text-emerald-200`}>
+                {statusMessage.v}
+              </div>
+            ) : null}
             {!authLoading.v && !authEnabled.v ? (
-              <div className="banner warn">Auth disabled. Set AUTH_PASSWORD to protect write operations.</div>
+              <div className={`${bannerBase} warn border-amber-700 bg-amber-950/45 text-amber-200`}>
+                Auth disabled. Set AUTH_PASSWORD to protect write operations.
+              </div>
             ) : null}
             {mode.v === "write" && !authLoading.v && authEnabled.v && !authenticated.v ? (
-              <div className="auth-inline rounded-xl">
+              <div className="auth-inline rounded-xl border border-slate-700 bg-slate-900/70 p-3">
                 <form
-                  className="auth-form"
+                  className="auth-form grid grid-cols-[minmax(0,1fr)_auto] gap-2"
                   onSubmit={(event: Event) => {
                     event.preventDefault();
                     void login();
                   }}
                 >
                   <input
-                    className="text-input"
+                    className={`text-input ${inputClass}`}
                     type="password"
                     placeholder="Password"
                     value={authPassword.v}
@@ -874,40 +932,40 @@ export const NotesApp = mount<{ api?: NotesApi }>((renew, props) => {
                       authPassword.v = (event.target as HTMLInputElement).value;
                     }}
                   />
-                  <button className="button" type="submit">
+                  <button className={buttonClass} type="submit">
                     Login
                   </button>
                 </form>
               </div>
             ) : null}
 
-            <div className="content-body flex min-h-0 flex-1 flex-col gap-3 overflow-auto pr-1">
+            <div className={`content-body flex min-h-0 flex-1 flex-col gap-3 overflow-auto pr-1 ${scrollAreaClass}`}>
               {mode.v === "list" ? (
-                <section className="empty">
+                <section className="empty rounded-xl border border-slate-700 bg-slate-900/90 p-4 text-slate-300">
                   <p>Select a note from the left list or create a new note.</p>
                 </section>
               ) : null}
 
               {mode.v === "view" ? (
-                <section className="viewer rounded-xl">
-                  {detailLoading.v ? <div className="hint">Loading note...</div> : null}
+                <section className="viewer rounded-xl border border-slate-700 bg-slate-900/90 p-4">
+                  {detailLoading.v ? <div className={hintClass}>Loading note...</div> : null}
                   {!detailLoading.v && selected.v ? (
                     <div>
-                      <h2>{selected.v.title}</h2>
-                      <p className="meta">Tags: {selected.v.category.join(", ") || "-"}</p>
-                      <div className="note-preview" innerHTML={renderMarkdownToHtml(selected.v.note)} />
+                      <h2 className="text-2xl font-semibold tracking-tight text-slate-100">{selected.v.title}</h2>
+                      <p className="meta mt-2 text-xs text-slate-400">Tags: {selected.v.category.join(", ") || "-"}</p>
+                      <div className={notePreviewClass} innerHTML={renderMarkdownToHtml(selected.v.note)} />
                     </div>
                   ) : null}
                 </section>
               ) : null}
 
               {mode.v === "write" ? (
-                <section className="editor-grid grid">
-                  <div className="editor-panel rounded-xl">
-                    <label>
+                <section className="editor-grid grid min-h-0 overflow-hidden grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] gap-3 max-[980px]:grid-cols-1">
+                  <div className="editor-panel flex min-h-0 overflow-hidden flex-col rounded-xl border border-slate-700 bg-slate-900/90 p-3.5">
+                    <label className="mb-2.5 flex flex-col gap-1.5 text-sm text-slate-300">
                       Title
                       <input
-                        className="text-input"
+                        className={`text-input ${inputClass}`}
                         value={formTitle.v}
                         onInput={(event: InputEvent) => {
                           formTitle.v = (event.target as HTMLInputElement).value;
@@ -915,10 +973,10 @@ export const NotesApp = mount<{ api?: NotesApi }>((renew, props) => {
                         }}
                       />
                     </label>
-                    <label>
+                    <label className="mb-2.5 flex flex-col gap-1.5 text-sm text-slate-300">
                       Tags (comma separated)
                       <input
-                        className="text-input"
+                        className={`text-input ${inputClass}`}
                         value={formTags.v}
                         onInput={(event: InputEvent) => {
                           formTags.v = (event.target as HTMLInputElement).value;
@@ -926,7 +984,7 @@ export const NotesApp = mount<{ api?: NotesApi }>((renew, props) => {
                         }}
                       />
                     </label>
-                    <label>
+                    <label className="mb-2.5 flex flex-col gap-1.5 text-sm text-slate-300">
                       Note (Monaco + Vim)
                       <MonacoVimEditor
                         value={formNote.v}
@@ -970,24 +1028,17 @@ export const NotesApp = mount<{ api?: NotesApi }>((renew, props) => {
                       />
                     </label>
                   </div>
-                  <div className="preview-panel rounded-xl">
-                    <h3>Preview (line {editorCursorLine.v})</h3>
+                  <div className="preview-panel flex min-h-[280px] min-w-0 flex-col overflow-hidden rounded-xl border border-slate-700 bg-slate-900/90 p-3.5">
+                    <h3 className="mb-2.5 text-base font-semibold text-slate-200">Preview (line {editorCursorLine.v})</h3>
                     <div
-                      className="preview-scroll"
+                      className={`preview-scroll flex min-h-[180px] flex-1 flex-col gap-1 overflow-auto ${scrollAreaClass}`}
                       ref={previewContainerRef}
                       onWheel={handlePreviewUserScroll}
                       onScroll={handlePreviewUserScroll}
                     >
-                      {previewBlocks.map((block) => (
-                        <div
-                          className="preview-block"
-                          key={`${block.start}-${block.end}`}
-                          data-line-start={String(block.start)}
-                          data-line-end={String(block.end)}
-                        >
-                          <div className="note-preview" innerHTML={renderMarkdownToHtml(block.text || " ")} />
-                        </div>
-                      ))}
+                      <div className="preview-block">
+                        <div className={previewNoteClass} innerHTML={renderMarkdownToHtml(formNote.v || " ")} />
+                      </div>
                     </div>
                   </div>
                 </section>
@@ -996,8 +1047,8 @@ export const NotesApp = mount<{ api?: NotesApi }>((renew, props) => {
           </main>
         </div>
 
-        <footer className="command-footer sticky bottom-0 z-20">
-          <div className={`command-mode mode-${mode.v}`}>{mode.v.toUpperCase()}</div>
+        <footer className="command-footer sticky bottom-0 z-20 grid grid-cols-[auto_1fr_auto] items-center gap-2.5 border-t border-slate-800 bg-slate-950/95 px-3 py-2 pb-[calc(8px+env(safe-area-inset-bottom))] backdrop-blur max-[980px]:grid-cols-1 max-[980px]:gap-2 max-[980px]:pb-[calc(10px+env(safe-area-inset-bottom))]">
+          <div className={commandModeClass}>{mode.v.toUpperCase()}</div>
           <form
             className="command-form flex items-center gap-2"
             onSubmit={(event: Event) => {
@@ -1007,7 +1058,7 @@ export const NotesApp = mount<{ api?: NotesApi }>((renew, props) => {
           >
             <input
               ref={commandInputRef}
-              className="command-input"
+              className="command-input w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 font-mono text-sm text-slate-100 placeholder:text-slate-500 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-500/30"
               value={commandInput.v}
               placeholder=":e  :q  :w  :wq"
               onInput={(event: InputEvent) => {
@@ -1020,11 +1071,15 @@ export const NotesApp = mount<{ api?: NotesApi }>((renew, props) => {
                 }
               }}
             />
-            <button className="button" type="submit">
+            <button className={buttonClass} type="submit">
               Run
             </button>
           </form>
-          <div className={`command-feedback ${commandFeedbackError.v ? "error" : ""}`}>
+          <div
+            className={`command-feedback text-xs whitespace-nowrap max-[980px]:whitespace-normal ${
+              commandFeedbackError.v ? "error text-rose-300" : "text-slate-400"
+            }`}
+          >
             {commandFeedback.v}
           </div>
         </footer>

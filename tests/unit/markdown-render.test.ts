@@ -7,10 +7,33 @@ describe("renderMarkdownToHtml", () => {
       "# Title\n\n- first\n- second\n\n`inline`\n\n```js\nconst n = 1;\n```"
     );
 
-    expect(html).toContain("<h1>Title</h1>");
-    expect(html).toContain("<ul><li>first</li><li>second</li></ul>");
-    expect(html).toContain("<p><code>inline</code></p>");
-    expect(html).toContain('<pre><code class="language-js">const n = 1;</code></pre>');
+    expect(html).toMatch(/<h1[^>]*>Title<\/h1>/);
+    expect(html).toMatch(/<ul[^>]*>/);
+    expect(html).toMatch(/<li[^>]*>first<\/li>/);
+    expect(html).toMatch(/<li[^>]*>second<\/li>/);
+    expect(html).toContain('data-line-start="1"');
+    expect(html).toContain('data-line-start="3"');
+    expect(html).toMatch(/<p[^>]*><code>inline<\/code><\/p>/);
+    expect(html).toMatch(/<pre[^>]*><code class="language-js">/);
+    expect(html).toContain('<span class="tok-keyword">const</span>');
+    expect(html).toContain('<span class="tok-number">1</span>');
+  });
+
+  it("highlights bash fenced code with comment, variable and option tokens", () => {
+    const html = renderMarkdownToHtml('```bash\n# deploy\necho "$HOME" --help\n```');
+
+    expect(html).toContain('<code class="language-bash">');
+    expect(html).toContain('<span class="tok-comment"># deploy</span>');
+    expect(html).toContain('<span class="tok-string">&quot;$HOME&quot;</span>');
+    expect(html).toContain('<span class="tok-function">echo</span>');
+    expect(html).toContain('<span class="tok-attr">--help</span>');
+  });
+
+  it("normalizes language aliases for fenced code", () => {
+    const html = renderMarkdownToHtml("```typescript\nconst count = 2\n```");
+
+    expect(html).toContain('<code class="language-ts">');
+    expect(html).toContain('<span class="tok-keyword">const</span>');
   });
 
   it("sanitizes unsafe html and javascript urls", () => {
