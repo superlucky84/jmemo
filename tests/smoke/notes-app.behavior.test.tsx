@@ -542,6 +542,33 @@ describe("NotesApp behavior", () => {
     expect(createNote).not.toHaveBeenCalled();
   });
 
+  it("fails closed when auth status check fails", async () => {
+    const getAuthStatus = vi.fn(async () => {
+      throw new NotesApiError(503, {
+        code: "AUTH_UNAVAILABLE",
+        message: "auth probe failed"
+      });
+    });
+
+    const app = <NotesApp api={createBaseApi({ getAuthStatus })} />;
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    activeUnmounts.push(render(app, container));
+    await flushMicrotasks();
+
+    const newButton = [...container.querySelectorAll(".button")].find(
+      (element) => element.textContent?.trim() === "New"
+    ) as HTMLButtonElement;
+    newButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await flushMicrotasks();
+
+    expect(container.querySelector(".editor-grid")).toBeNull();
+    expect(container.querySelector(".auth-form")).not.toBeNull();
+    expect(container.querySelector(".command-feedback.error")?.textContent).toContain(
+      "Login is required for write operations."
+    );
+  });
+
   it("allows :w save after login and keeps write mode", async () => {
     const createNote = vi.fn(async () => ({
       _id: "000000000000000000000001",

@@ -356,9 +356,10 @@ export const NotesApp = mount<{ api?: NotesApi }>((renew, props) => {
         authExpired.v = false;
       }
     } catch (error) {
-      authEnabled.v = false;
-      authenticated.v = true;
+      authEnabled.v = true;
+      authenticated.v = false;
       setFailure(error);
+      setCommandStatus("Auth check failed. Login is required for write operations.", true);
     } finally {
       authLoading.v = false;
     }
