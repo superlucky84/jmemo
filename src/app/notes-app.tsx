@@ -674,8 +674,9 @@ export const NotesApp = mount<{ api?: NotesApi }>((renew, props) => {
 
     return (
       <div className="app-shell theme-dark">
-        <div className="layout">
-          <aside className="sidebar">
+        <div className={`layout ${mode.v === "write" ? "layout-write" : ""}`}>
+          {mode.v !== "write" ? (
+            <aside className="sidebar">
             <div className="panel-title">
               <h1>jmemo</h1>
               <p>lithent refactor</p>
@@ -761,9 +762,10 @@ export const NotesApp = mount<{ api?: NotesApi }>((renew, props) => {
                   </div>
                 ))}
             </div>
-          </aside>
+            </aside>
+          ) : null}
 
-          <main className="content">
+          <main className={`content ${mode.v === "write" ? "content-write" : ""}`}>
             <header className="content-header">
               <div>
                 <strong>{mode.v === "write" ? "Write" : "View"}</strong>
@@ -802,6 +804,30 @@ export const NotesApp = mount<{ api?: NotesApi }>((renew, props) => {
 
             {errorMessage.v ? <div className="banner error">{errorMessage.v}</div> : null}
             {statusMessage.v ? <div className="banner ok">{statusMessage.v}</div> : null}
+            {mode.v === "write" && !authLoading.v && authEnabled.v && !authenticated.v ? (
+              <div className="auth-inline">
+                <form
+                  className="auth-form"
+                  onSubmit={(event: Event) => {
+                    event.preventDefault();
+                    void login();
+                  }}
+                >
+                  <input
+                    className="text-input"
+                    type="password"
+                    placeholder="Password"
+                    value={authPassword.v}
+                    onInput={(event: InputEvent) => {
+                      authPassword.v = (event.target as HTMLInputElement).value;
+                    }}
+                  />
+                  <button className="button" type="submit">
+                    Login
+                  </button>
+                </form>
+              </div>
+            ) : null}
 
             <div className="content-body">
               {mode.v === "list" ? (

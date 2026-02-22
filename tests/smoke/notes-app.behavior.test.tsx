@@ -609,9 +609,10 @@ describe("NotesApp behavior", () => {
     expect(createNote).toHaveBeenCalledTimes(1);
     expect(container.querySelector(".editor-grid")).not.toBeNull();
 
-    const noteButton = container.querySelector(".list-main") as HTMLButtonElement;
-    noteButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await runFooterCommand(container, ":wq");
     await flushMicrotasks();
+    await flushMicrotasks();
+    expect(container.querySelector(".viewer")).not.toBeNull();
 
     const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
     const deleteButton = [...container.querySelectorAll(".button")].find(

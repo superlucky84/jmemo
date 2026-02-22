@@ -39,6 +39,10 @@ body {
   min-height: 0;
 }
 
+.layout.layout-write {
+  grid-template-columns: 1fr;
+}
+
 .sidebar {
   border-right: 1px solid #d7dde5;
   background: rgba(255, 255, 255, 0.92);
@@ -72,6 +76,13 @@ body {
   border: 1px solid #2d3c59;
   border-radius: 10px;
   background: rgba(16, 23, 35, 0.7);
+  padding: 10px;
+}
+
+.auth-inline {
+  border: 1px solid #2a3650;
+  border-radius: 10px;
+  background: rgba(16, 23, 35, 0.72);
   padding: 10px;
 }
 
@@ -199,6 +210,10 @@ body {
   gap: 12px;
   min-height: 0;
   overflow: hidden;
+}
+
+.content.content-write {
+  padding: 16px 18px;
 }
 
 .content-header {
@@ -360,8 +375,9 @@ body {
 
 .editor-grid {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
   gap: 12px;
+  min-height: 0;
 }
 
 .editor-panel,
@@ -370,6 +386,7 @@ body {
   border: 1px solid #d7dde5;
   border-radius: 12px;
   padding: 14px;
+  min-height: 0;
 }
 
 .editor-panel {
@@ -560,6 +577,11 @@ body {
 .theme-dark .preview-block {
   border-color: #2a3650;
   background: rgba(20, 28, 44, 0.92);
+}
+
+.theme-dark .auth-inline {
+  border-color: #2a3650;
+  background: rgba(20, 28, 44, 0.9);
 }
 
 .theme-dark .list-item.active {
