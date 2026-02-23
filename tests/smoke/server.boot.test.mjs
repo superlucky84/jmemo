@@ -1,4 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import request from "supertest";
 import { createApp } from "../../server/app.mjs";
 
@@ -21,6 +24,16 @@ function createDummyNoteService() {
     }
   };
 }
+
+const tempDirs = [];
+
+afterEach(async () => {
+  await Promise.all(
+    tempDirs.splice(0).map(async (dirPath) => {
+      await rm(dirPath, { recursive: true, force: true });
+    })
+  );
+});
 
 describe("server boot smoke", () => {
   it("responds on /health/live and /health/ready", async () => {
@@ -53,5 +66,28 @@ describe("server boot smoke", () => {
     expect(ready.status).toBe(503);
     expect(ready.body.error.code).toBe("DB_UNAVAILABLE");
   });
-});
 
+  it("serves built frontend index from / when dist exists", async () => {
+    const frontendDistDir = await mkdtemp(join(tmpdir(), "jmemo-dist-"));
+    tempDirs.push(frontendDistDir);
+    await writeFile(
+      join(frontendDistDir, "index.html"),
+      "<!doctype html><html><body>jmemo-frontend</body></html>",
+      "utf8"
+    );
+
+    const app = createApp({
+      noteService: createDummyNoteService(),
+      readinessCheck: async () => ({ ok: true }),
+      frontendDistDir
+    });
+
+    const root = await request(app).get("/");
+    expect(root.status).toBe(200);
+    expect(root.text).toContain("jmemo-frontend");
+
+    const health = await request(app).get("/health/live");
+    expect(health.status).toBe(200);
+    expect(health.body.status).toBe("live");
+  });
+});

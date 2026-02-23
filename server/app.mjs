@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import express from "express";
 import { resolve } from "node:path";
+import { existsSync } from "node:fs";
 import { createErrorMiddleware, createApiError } from "./errors.mjs";
 import { createJnoteRouter } from "./routes/jnote.mjs";
 import { toSafeLogLine } from "./logger.mjs";
@@ -20,12 +21,19 @@ function asyncRoute(handler) {
   };
 }
 
+const API_PREFIXES = ["/auth", "/jnote", "/health", "/images"];
+
+function isApiPath(pathname = "") {
+  return API_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
+}
+
 export function createApp(options = {}) {
   const {
     noteService,
     readinessCheck = async () => ({ ok: true }),
     logger = console,
     uploadRootDir = resolve(process.cwd(), "images"),
+    frontendDistDir = resolve(process.cwd(), "dist"),
     authService = createAuthService({ password: "" })
   } = options;
 
@@ -190,6 +198,19 @@ export function createApp(options = {}) {
       requireWriteAuth
     })
   );
+
+  if (existsSync(frontendDistDir)) {
+    app.use(express.static(frontendDistDir));
+
+    app.get(/.*/, (req, res, next) => {
+      if (isApiPath(req.path)) {
+        next();
+        return;
+      }
+
+      res.sendFile(resolve(frontendDistDir, "index.html"));
+    });
+  }
 
   app.use((req, _res, next) => {
     next(
