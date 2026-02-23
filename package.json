@@ -35,7 +35,7 @@
   },
   "dependencies": {
     "express": "^5.2.1",
-    "lithent": "file:../lithent",
+    "lithent": "^1.21.7",
     "monaco-editor": "^0.52.2",
     "monaco-vim": "^0.4.0",
     "mongodb": "^7.1.0",

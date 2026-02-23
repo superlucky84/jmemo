@@ -12,8 +12,8 @@ importers:
         specifier: ^5.2.1
         version: 5.2.1
       lithent:
-        specifier: file:../lithent
-        version: file:../lithent
+        specifier: ^1.21.7
+        version: 1.21.7
       monaco-editor:
         specifier: ^0.52.2
         version: 0.52.2
@@ -2371,8 +2371,8 @@ packages:
   linkify-it@5.0.0:
     resolution: {integrity: sha512-5aHCbzQRADcdP+ATqnDuhhJ/MRIqDkZX5pyjFHRRysS8vZ5AbqGEoFIb6pYHPZ+L/OC2Lc+xT8uHVVR5CAK/wQ==}
 
-  lithent@file:../lithent:
-    resolution: {directory: ../lithent, type: directory}
+  lithent@1.21.7:
+    resolution: {integrity: sha512-o93x4xdGxVmCecBWgR1TB2GHiNx8kzDtdcjRxESOjyKAUOulZFHLPehMJwVVsqvya3g+ijDRxQSnOxcTpTsVww==}
 
   locate-path@6.0.0:
     resolution: {integrity: sha512-iPZK6eYjbxRu3uB4/WZ3EsEIMJFMqAoopl3R+zuq0UjcAm/MO6KCweDgPfP3elTztoKP3KtnVHxTn2NHBSDVUw==}
@@ -6509,7 +6509,7 @@ snapshots:
     dependencies:
       uc.micro: 2.1.0
 
-  lithent@file:../lithent: {}
+  lithent@1.21.7: {}
 
   locate-path@6.0.0:
     dependencies:
