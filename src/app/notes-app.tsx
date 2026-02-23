@@ -734,9 +734,9 @@ export const NotesApp = mount<{ api?: NotesApi }>((renew, props) => {
     const scrollAreaClass =
       "overscroll-contain [-webkit-overflow-scrolling:touch] [scrollbar-width:thin] [scrollbar-color:#4e648f_#1a2538] [&::-webkit-scrollbar]:h-2.5 [&::-webkit-scrollbar]:w-2.5 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:bg-slate-800 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-500";
     const notePreviewClass =
-      "note-preview mt-3 rounded-xl border border-slate-700 bg-slate-900/90 p-3.5 text-sm leading-7 tracking-[0.01em] text-slate-100 break-words [&>*:first-child]:mt-0 [&>*:last-child]:mb-0 [&_h1]:mt-3.5 [&_h1]:mb-2 [&_h1]:border-b [&_h1]:border-slate-700 [&_h1]:pb-1.5 [&_h1]:text-[1.85rem] [&_h1]:leading-tight [&_h1]:font-bold [&_h2]:mt-3.5 [&_h2]:mb-2 [&_h2]:border-b [&_h2]:border-slate-700 [&_h2]:pb-1 [&_h2]:text-[1.5rem] [&_h2]:leading-tight [&_h2]:font-bold [&_h3]:mt-3 [&_h3]:mb-1.5 [&_h3]:text-[1.2rem] [&_h3]:font-semibold [&_p]:my-2.5 [&_ul]:my-2.5 [&_ul]:pl-5 [&_ol]:my-2.5 [&_ol]:pl-5 [&_li+li]:mt-1 [&_li::marker]:text-blue-300 [&_blockquote]:my-2.5 [&_blockquote]:rounded-md [&_blockquote]:border-l-[3px] [&_blockquote]:border-blue-400 [&_blockquote]:bg-blue-950/35 [&_blockquote]:px-3 [&_blockquote]:py-2 [&_blockquote]:text-slate-300 [&_pre]:my-2.5 [&_pre]:overflow-auto [&_pre]:rounded-lg [&_pre]:border [&_pre]:border-slate-700 [&_pre]:bg-slate-950 [&_pre]:px-3 [&_pre]:py-2.5 [&_code]:rounded [&_code]:bg-slate-800 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-[0.92em] [&_code]:text-slate-100 [&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_a]:text-blue-300 [&_a:hover]:underline [&_img]:max-w-full [&_img]:rounded-lg [&_img]:border [&_img]:border-slate-600 [&_img]:shadow-lg [&_hr]:my-3 [&_hr]:border-0 [&_hr]:border-t [&_hr]:border-slate-700 [&_table]:my-2.5 [&_table]:w-full [&_table]:border-collapse [&_table]:border [&_table]:border-slate-700 [&_thead_tr]:bg-slate-800/70 [&_th]:border [&_th]:border-slate-700 [&_th]:px-2.5 [&_th]:py-2 [&_th]:text-left [&_td]:border [&_td]:border-slate-700 [&_td]:px-2.5 [&_td]:py-2 [&_td]:text-left [&_strong]:font-bold [&_.tok-comment]:italic [&_.tok-comment]:text-slate-400 [&_.tok-keyword]:text-purple-300 [&_.tok-literal]:text-blue-300 [&_.tok-string]:text-lime-300 [&_.tok-number]:text-orange-300 [&_.tok-variable]:text-cyan-300 [&_.tok-function]:text-sky-300 [&_.tok-attr]:text-amber-300";
+      "note-preview mt-3 rounded-xl border border-slate-700 bg-slate-900/90 p-3.5";
     const previewNoteClass =
-      `${notePreviewClass} mt-0 border-0 bg-transparent p-1 [&>*:first-child]:mt-1 [&>*:last-child]:mb-1`;
+      "note-preview mt-0 border-0 bg-transparent p-1";
     const commandModeClass =
       mode.v === "write"
         ? "command-mode mode-write min-w-14 rounded-full bg-blue-950 text-blue-200 px-3 py-1 text-xs font-semibold tracking-wider text-center"
@@ -947,20 +947,16 @@ export const NotesApp = mount<{ api?: NotesApi }>((renew, props) => {
               ) : null}
 
               {mode.v === "view" ? (
-                <section className="viewer rounded-xl border border-slate-700 bg-slate-900/90 p-4">
+                <section className="viewer">
                   {detailLoading.v ? <div className={hintClass}>Loading note...</div> : null}
                   {!detailLoading.v && selected.v ? (
-                    <div>
-                      <h2 className="text-2xl font-semibold tracking-tight text-slate-100">{selected.v.title}</h2>
-                      <p className="meta mt-2 text-xs text-slate-400">Tags: {selected.v.category.join(", ") || "-"}</p>
-                      <div className={notePreviewClass} innerHTML={renderMarkdownToHtml(selected.v.note)} />
-                    </div>
+                    <div className="note-preview" innerHTML={renderMarkdownToHtml(selected.v.note)} />
                   ) : null}
                 </section>
               ) : null}
 
               {mode.v === "write" ? (
-                <section className="editor-grid grid min-h-0 overflow-hidden grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] gap-3 max-[980px]:grid-cols-1">
+                <section className="editor-grid grid min-h-0 flex-1 overflow-hidden grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] gap-3 max-[980px]:grid-cols-1">
                   <div className="editor-panel flex min-h-0 overflow-hidden flex-col rounded-xl border border-slate-700 bg-slate-900/90 p-3.5">
                     <label className="mb-2.5 flex flex-col gap-1.5 text-sm text-slate-300">
                       Title
@@ -984,7 +980,7 @@ export const NotesApp = mount<{ api?: NotesApi }>((renew, props) => {
                         }}
                       />
                     </label>
-                    <label className="mb-2.5 flex flex-col gap-1.5 text-sm text-slate-300">
+                    <label className="mb-2.5 flex min-h-0 flex-1 flex-col gap-1.5 text-sm text-slate-300">
                       Note (Monaco + Vim)
                       <MonacoVimEditor
                         value={formNote.v}

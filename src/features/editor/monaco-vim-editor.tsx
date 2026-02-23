@@ -398,7 +398,7 @@ export const MonacoVimEditor = mount<MonacoVimEditorProps>((renew, props) => {
 
     return (
       <div
-        className="monaco-vim-wrapper flex min-h-0 flex-col gap-1.5"
+        className="monaco-vim-wrapper flex min-h-0 flex-1 flex-col gap-1.5"
         onDragOver={(event: DragEvent) => {
           event.preventDefault();
         }}
@@ -413,12 +413,12 @@ export const MonacoVimEditor = mount<MonacoVimEditorProps>((renew, props) => {
         }}
       >
         <div
-          className={`monaco-editor-host min-h-[320px] w-full overflow-hidden rounded-lg border border-slate-600 ${fallbackMode.v ? "hidden" : ""}`}
+          className={`monaco-editor-host min-h-[200px] flex-1 w-full overflow-hidden rounded-lg border border-slate-600 ${fallbackMode.v ? "hidden" : ""}`}
           ref={hostRef}
         />
         <textarea
           ref={fallbackInputRef}
-          className={`note-input min-h-[320px] w-full resize-y rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 font-mono text-sm leading-6 text-slate-100 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-500/30 ${fallbackMode.v ? "" : "hidden"}`}
+          className={`note-input min-h-[200px] flex-1 w-full resize-y rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 font-mono text-sm leading-6 text-slate-100 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-500/30 ${fallbackMode.v ? "" : "hidden"}`}
           value={props.value}
           onInput={(event: InputEvent) => {
             props.onChange((event.target as HTMLTextAreaElement).value);
