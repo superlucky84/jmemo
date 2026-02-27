@@ -512,7 +512,7 @@ describe("NotesApp behavior", () => {
     expect(commandInput.value).toBe(":");
   });
 
-  it("blocks unauthenticated write entry and prompts login", async () => {
+  it("allows unauthenticated write entry but blocks save", async () => {
     const createNote = vi.fn(async () => ({
       _id: "000000000000000000000001",
       title: "created",
@@ -533,12 +533,13 @@ describe("NotesApp behavior", () => {
     newButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     await flushMicrotasks();
 
-    expect(container.querySelector(".editor-grid")).toBeNull();
-    expect(container.textContent).toContain("Login is required for write operations.");
+    expect(container.querySelector(".editor-grid")).not.toBeNull();
+    expect(container.querySelector(".auth-form")).not.toBeNull();
 
-    await runFooterCommand(container, ":e");
-    expect(container.querySelector(".editor-grid")).toBeNull();
-    expect(container.querySelector(".command-feedback")?.textContent).toContain("Login first");
+    await runFooterCommand(container, ":w");
+    expect(container.querySelector(".command-feedback.error")?.textContent).toContain(
+      "Login first to run write commands."
+    );
     expect(createNote).not.toHaveBeenCalled();
   });
 
@@ -562,10 +563,10 @@ describe("NotesApp behavior", () => {
     newButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     await flushMicrotasks();
 
-    expect(container.querySelector(".editor-grid")).toBeNull();
+    expect(container.querySelector(".editor-grid")).not.toBeNull();
     expect(container.querySelector(".auth-form")).not.toBeNull();
     expect(container.querySelector(".command-feedback.error")?.textContent).toContain(
-      "Login is required for write operations."
+      "Auth check failed."
     );
   });
 

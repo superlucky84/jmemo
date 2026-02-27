@@ -424,10 +424,6 @@ export const NotesApp = mount<{ api?: NotesApi }>((renew, props) => {
   };
 
   const startCreate = ({ focusEditor = true }: { focusEditor?: boolean } = {}) => {
-    if (!requireWriteAccess()) {
-      return;
-    }
-
     mode.v = "write";
     previewFollowBottom.v = false;
     editingId.v = null;
@@ -443,10 +439,6 @@ export const NotesApp = mount<{ api?: NotesApi }>((renew, props) => {
 
   const startEdit = ({ focusEditor = true }: { focusEditor?: boolean } = {}) => {
     if (!selected.v) {
-      return;
-    }
-
-    if (!requireWriteAccess()) {
       return;
     }
 
@@ -634,7 +626,10 @@ export const NotesApp = mount<{ api?: NotesApi }>((renew, props) => {
     const route = resolved.route;
     commandInput.v = "";
 
-    if (route.kind !== "quit" && !requireWriteAccess("Login first to run write commands.")) {
+    if (
+      (route.kind === "save" || route.kind === "save-and-close") &&
+      !requireWriteAccess("Login first to run write commands.")
+    ) {
       return;
     }
 
